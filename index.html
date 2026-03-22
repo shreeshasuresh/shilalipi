@@ -525,33 +525,46 @@ function onIndexLoadError(){
 }
 
 function initSearch(){
-  // window.SILALIPI_INDEX is set by search_index.js
-  if(typeof window.SILALIPI_INDEX==='undefined') return;
-  allDocs=window.SILALIPI_INDEX;
+  if(typeof window.SILALIPI_INDEX==='undefined'){
+    console.warn('SILALIPI_INDEX not set — index may still be loading');
+    return;
+  }
+  // Guard: MiniSearch must be loaded from CDN
+  if(typeof MiniSearch==='undefined'){
+    console.error('MiniSearch not loaded — CDN may be blocked');
+    document.getElementById('indexStatus').innerHTML=
+      '<span class="index-warn">⚠️ Search library failed to load. Check your internet connection and refresh.</span>';
+    return;
+  }
 
-  miniSearch=new MiniSearch({
-    fields:['title','snippet','text','era','place','dynasty','religion','script','volume'],
-    storeFields:['id','title','volume','volId','page','pageEnd','era','place','dynasty','religion','script','snippet','url'],
-    searchOptions:{
-      boost:{title:4,era:2,place:2,dynasty:2,religion:2,snippet:1.5,text:1},
-      fuzzy:0.2,
-      prefix:true,
-    }
-  });
+  try {
+    allDocs=window.SILALIPI_INDEX;
+    console.log('Building MiniSearch index over',allDocs.length,'documents…');
 
-  miniSearch.addAll(allDocs);
-  indexReady=true;
+    miniSearch=new MiniSearch({
+      fields:['title','snippet','text','era','place','dynasty','religion','script','volume'],
+      storeFields:['id','title','volume','volId','page','pageEnd','era','place','dynasty','religion','script','snippet','url'],
+    });
 
-  const meta=window.SILALIPI_META||{};
-  const articles=meta.total_articles||allDocs.length;
-  const vols=meta.volumes||'?';
-  document.getElementById('indexStatus').innerHTML=
-    '<span class="index-ok">✓ Index loaded — </span>'+
-    '<strong>'+articles.toLocaleString()+' inscription articles</strong> from '+
-    '<strong>'+vols+' volumes</strong> · fully local, instant search'+
-    (meta.sample_mode?' <em>(sample mode — run without --sample for full index)</em>':'');
-  EMPTY_MSG='Type a search above or click a quick tag to explore the corpus.';
-  showEmptyState('🏛️', EMPTY_MSG);
+    miniSearch.addAll(allDocs);
+    indexReady=true;
+    console.log('Index ready. indexReady=',indexReady);
+
+    const meta=window.SILALIPI_META||{};
+    const articles=meta.total_articles||allDocs.length;
+    const vols=meta.volumes||'?';
+    document.getElementById('indexStatus').innerHTML=
+      '<span class="index-ok">✓ Index loaded — </span>'+
+      '<strong>'+articles.toLocaleString()+' inscription articles</strong> from '+
+      '<strong>'+vols+' volumes</strong> · fully local, instant search'+
+      (meta.sample_mode?' <em>(sample mode — run without --sample for full index)</em>':'');
+    EMPTY_MSG='Type a search above or click a quick tag to explore the corpus.';
+    showEmptyState('🏛️', EMPTY_MSG);
+  } catch(err) {
+    console.error('initSearch failed:', err);
+    document.getElementById('indexStatus').innerHTML=
+      '<span class="index-warn">⚠️ Index build error: '+err.message+'</span>';
+  }
 }
 
 // initSearch() is now called via the programmatic script loader below
@@ -610,43 +623,50 @@ function getActiveVolId(){
 function doSearch(){
   if(!indexReady){
     document.getElementById('resultsArea').innerHTML=
-      '<div class="empty-state"><div class="ei">⏳</div>Index is still loading — please wait a moment.</div>';
+      '<div class="empty-state"><div class="ei">⏳</div><div>Index is still loading — please wait a moment.</div></div>';
     return;
   }
   const query=document.getElementById('searchInput').value.trim();
   lastQuery=query;
   if(!query){ clearResults(); return; }
 
-  // Build MiniSearch options
-  const opts={
-    boost:{title:4,era:2,place:2,dynasty:2,religion:2,snippet:1.5},
-    fuzzy:0.2,prefix:true,
+  // Field boost by active filter
+  const boostMap={
+    all:   {title:4,era:2,place:2,dynasty:2,religion:2,snippet:1.5,text:1},
+    era:   {era:6,title:2,text:1},
+    place: {place:6,snippet:2,title:2,text:1},
+    dynasty:{dynasty:6,snippet:2,title:2,text:1},
+    religion:{religion:6,snippet:2,title:2,text:1},
+    script:{script:6,title:2,text:1},
   };
 
-  // Field-specific boost based on active filter
-  const fieldBoost={
-    era:    {era:5,text:1},
-    place:  {place:5,snippet:2,text:1},
-    dynasty:{dynasty:5,snippet:2,text:1},
-    religion:{religion:5,snippet:2,text:1},
-    script: {script:5,text:1},
-  }[activeFilter];
-  if(fieldBoost) opts.boost=fieldBoost;
-
-  let results=miniSearch.search(query,opts);
+  let results=[];
+  try {
+    results=miniSearch.search(query,{
+      boost: boostMap[activeFilter]||boostMap.all,
+      fuzzy:0.2,
+      prefix:true,
+    });
+    console.log('Search "'+query+'" → '+results.length+' results');
+  } catch(err){
+    console.error('miniSearch.search failed:', err);
+    document.getElementById('resultsArea').innerHTML=
+      '<div class="empty-state"><div class="ei">⚠️</div><div>Search error: '+err.message+'</div></div>';
+    return;
+  }
 
   // Volume filter
   const volId=getActiveVolId();
   if(volId) results=results.filter(r=>r.volId===volId);
 
-  // Year range filter (numeric CE years in era field)
+  // Year range filter
   const yFrom=parseInt(document.getElementById('yearFrom')?.value);
-  const yTo=parseInt(document.getElementById('yearTo')?.value);
+  const yTo  =parseInt(document.getElementById('yearTo')?.value);
   if(!isNaN(yFrom)||!isNaN(yTo)){
     results=results.filter(r=>{
-      const yearMatch=r.era.match(/\b(\d{3,4})\s*(?:CE|AD|A\.D\.)\b/i)||r.era.match(/(\d{3,4})/);
-      if(!yearMatch) return true; // keep if no year found
-      const y=parseInt(yearMatch[1]);
+      const m=String(r.era||'').match(/\b(\d{3,4})\b/);
+      if(!m) return true;
+      const y=parseInt(m[1]);
       if(!isNaN(yFrom)&&y<yFrom) return false;
       if(!isNaN(yTo)  &&y>yTo)   return false;
       return true;
@@ -655,14 +675,10 @@ function doSearch(){
 
   // Sort
   if(sortMode==='era'){
-    results.sort((a,b)=>{
-      const ya=extractYear(a.era), yb=extractYear(b.era);
-      return (ya||9999)-(yb||9999);
-    });
+    results.sort((a,b)=>(extractYear(a.era)||9999)-(extractYear(b.era)||9999));
   } else if(sortMode==='volume'){
-    results.sort((a,b)=>a.volume.localeCompare(b.volume));
+    results.sort((a,b)=>String(a.volume||'').localeCompare(String(b.volume||'')));
   }
-  // relevance: keep MiniSearch score order (default)
 
   lastResults=results;
   document.getElementById('resultsCount').textContent=
@@ -756,17 +772,25 @@ function renderPage(pg){
 function buildCard(r){
   const terms=(lastQuery||'').toLowerCase().split(/\s+/).filter(t=>t.length>2);
 
-  // Highlight helper — returns a span with safe text + mark nodes
+  // Highlight helper: splits str on matched terms, wraps matches in <mark>
+  // Uses separate regexes to avoid stateful lastIndex bugs with /g flag
   function highlightEl(str){
     const span=document.createElement('span');
-    if(!str||!terms.length){ span.textContent=str||''; return span; }
-    // Split text around matched terms
-    const re=new RegExp('('+terms.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')', 'gi');
-    const parts=String(str).split(re);
-    parts.forEach(part=>{
-      if(re.test(part)){
-        re.lastIndex=0;
-        const mark=document.createElement('mark'); mark.textContent=part; span.appendChild(mark);
+    if(!str){ return span; }
+    if(!terms.length){ span.textContent=str; return span; }
+
+    // Build pattern for splitting (capturing group keeps matches in the parts array)
+    const escapedTerms=terms.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+    const splitRe=new RegExp('('+escapedTerms.join('|')+')', 'gi');
+    // Separate non-global regex for testing each part — no lastIndex state
+    const testRe=new RegExp('^(?:'+escapedTerms.join('|')+')+$', 'i');
+
+    String(str).split(splitRe).forEach(part=>{
+      if(!part) return; // skip empty strings from split
+      if(testRe.test(part)){
+        const mark=document.createElement('mark');
+        mark.textContent=part;
+        span.appendChild(mark);
       } else {
         span.appendChild(document.createTextNode(part));
       }
@@ -1054,10 +1078,24 @@ document.getElementById('learnInput').addEventListener('keydown',e=>{if(e.key===
 
 /* ── Load search index after all functions are defined ── */
 (function(){
-  const s = document.createElement('script');
-  s.src = 'search_index.js';
-  s.onload = () => initSearch();
-  s.onerror = () => onIndexLoadError();
+  const s=document.createElement('script');
+  s.src='search_index.js';
+  s.onload=()=>{
+    // MiniSearch CDN may still be loading — poll until ready, max 5s
+    let attempts=0;
+    const tryInit=()=>{
+      if(typeof MiniSearch!=='undefined'){
+        initSearch();
+      } else if(attempts++<20){
+        setTimeout(tryInit,250);
+      } else {
+        document.getElementById('indexStatus').innerHTML=
+          '<span class="index-warn">⚠️ MiniSearch library failed to load from CDN. Check your connection and refresh.</span>';
+      }
+    };
+    tryInit();
+  };
+  s.onerror=()=>onIndexLoadError();
   document.head.appendChild(s);
 })();
 </script>
