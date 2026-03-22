@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Śilālipi — India's Epigraphic Heritage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<!-- MiniSearch — 7KB, zero-dependency, full-text search in the browser -->
+<script src="https://cdn.jsdelivr.net/npm/minisearch@6.3.0/dist/umd/index.min.js"></script>
+<!-- PDF.js for inline viewer -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<style>
+/* ══════════════════════════════════════════
+   DESIGN TOKENS
+══════════════════════════════════════════ */
+:root {
+  --bg:#fdf8f0; --bg-alt:#f5ede0; --bg-card:#fffcf7; --bg-deep:#ede3d4;
+  --ink:#2c1e0f; --ink-mid:#5a3e28; --ink-light:#8a6a4a;
+  --ochre:#b36a1a; --saffron:#d4732a; --gold:#a8851a; --gold-dark:#7a5f0e;
+  --terracotta:#a03520; --indigo:#2a3a6e; --moss:#2d5030; --lotus:#b03060;
+  --border:rgba(139,100,60,0.22); --border-dark:rgba(139,100,60,0.42);
+  --shadow:rgba(80,50,20,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Noto Serif',serif;background:var(--bg);color:var(--ink);min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg width='200' height='200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");pointer-events:none;z-index:0;}
+
+/* HEADER */
+header{position:relative;z-index:10;background:linear-gradient(180deg,#fffdf8,var(--bg));text-align:center;padding:40px 20px 0;border-bottom:2px solid var(--border-dark);box-shadow:0 2px 16px var(--shadow);}
+.om-symbol{font-size:2.6rem;color:var(--saffron);display:block;margin-bottom:6px;}
+h1{font-family:'Cormorant Garamond',serif;font-size:clamp(2rem,5vw,3.5rem);font-weight:300;letter-spacing:.06em;}
+h1 em{font-style:italic;color:var(--ochre);}
+.subtitle{font-family:'IM Fell English',serif;font-style:italic;font-size:.91rem;color:var(--ink-light);margin-top:5px;}
+.divider{display:flex;align-items:center;gap:14px;margin:18px auto 0;max-width:440px;}
+.divider-line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--border-dark),transparent);}
+
+/* INDEX STATUS BAR */
+#indexBar{position:relative;z-index:10;background:var(--bg-alt);border-bottom:1px solid var(--border);padding:8px 20px;text-align:center;font-size:.78rem;color:var(--ink-light);}
+#indexBar strong{color:var(--ochre);}
+#indexBar .index-ok{color:var(--moss);}
+#indexBar .index-warn{color:var(--terracotta);}
+
+/* VOLUME SELECTOR */
+.vol-selector{position:relative;z-index:10;background:var(--bg-alt);border-bottom:1px solid var(--border);padding:10px 16px 0;}
+.vol-header{display:flex;align-items:center;gap:10px;max-width:1100px;margin:0 auto;}
+.vol-label{font-size:.67rem;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-light);white-space:nowrap;font-weight:700;}
+.vol-badge{font-size:.69rem;background:var(--ochre);color:white;border-radius:10px;padding:1px 8px;white-space:nowrap;}
+.vol-scroll{display:flex;gap:5px;overflow-x:auto;padding:6px 0 10px;flex:1;scrollbar-width:thin;}
+.vol-chip{flex-shrink:0;padding:3px 11px;border-radius:20px;border:1px solid var(--border-dark);font-size:.72rem;color:var(--ink-light);cursor:pointer;transition:all .18s;background:var(--bg-card);white-space:nowrap;font-family:'Noto Serif',serif;}
+.vol-chip:hover{border-color:var(--ochre);color:var(--ochre);background:#fff8ee;}
+.vol-chip.active{background:var(--ochre);border-color:var(--ochre);color:white;font-weight:700;}
+.vol-chip.appendix{border-style:dashed;}
+.vol-chip.appendix.active{background:var(--moss);border-color:var(--moss);}
+
+/* NAV TABS */
+nav{position:relative;z-index:10;display:flex;justify-content:center;background:var(--bg-card);border-bottom:2px solid var(--border);box-shadow:0 1px 6px var(--shadow);}
+.tab-btn{background:none;border:none;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:500;letter-spacing:.07em;color:var(--ink-light);padding:15px 32px;position:relative;transition:color .25s;}
+.tab-btn::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:2px;background:var(--saffron);transform:scaleX(0);transition:transform .25s;}
+.tab-btn.active{color:var(--saffron);}
+.tab-btn.active::after{transform:scaleX(1);}
+.tab-btn:hover{color:var(--ochre);}
+
+main{position:relative;z-index:5;}
+.tab-pane{display:none;}
+.tab-pane.active{display:block;}
+
+/* ══════════════════════════════════════════
+   SEARCH TAB
+══════════════════════════════════════════ */
+.search-wrap{max-width:900px;margin:0 auto;padding:36px 20px;}
+.search-hero{font-family:'Cormorant Garamond',serif;font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:300;font-style:italic;color:var(--ink-mid);background:var(--bg-alt);border-left:3px solid var(--saffron);padding:16px 20px;border-radius:3px;margin-bottom:26px;}
+.filter-row{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px;}
+.filter-pill{padding:7px 17px;border-radius:28px;border:1px solid var(--border-dark);background:var(--bg-card);color:var(--ink-light);cursor:pointer;font-size:.81rem;font-family:'Noto Serif',serif;letter-spacing:.04em;transition:all .18s;}
+.filter-pill:hover{border-color:var(--ochre);color:var(--ochre);}
+.filter-pill.active{background:var(--ochre);border-color:var(--ochre);color:white;}
+.year-range{display:flex;gap:10px;margin-bottom:12px;}
+.year-input{flex:1;padding:9px 13px;background:var(--bg-card);border:1px solid var(--border-dark);border-radius:4px;color:var(--ink);font-family:'Noto Serif',serif;font-size:.88rem;outline:none;}
+.year-input:focus{border-color:var(--ochre);box-shadow:0 0 0 2px rgba(180,100,26,.1);}
+.year-input::placeholder{color:var(--ink-light);}
+.search-box-wrap{position:relative;margin-bottom:12px;}
+.search-input{width:100%;padding:14px 54px 14px 18px;background:var(--bg-card);border:1.5px solid var(--border-dark);border-radius:4px;color:var(--ink);font-size:.97rem;font-family:'Noto Serif',serif;outline:none;box-shadow:0 1px 4px var(--shadow);transition:border-color .2s,box-shadow .2s;}
+.search-input:focus{border-color:var(--ochre);box-shadow:0 0 0 3px rgba(180,100,26,.12);}
+.search-input::placeholder{color:var(--ink-light);}
+.search-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:var(--saffron);border:none;cursor:pointer;width:36px;height:36px;border-radius:3px;display:flex;align-items:center;justify-content:center;color:white;font-size:1rem;transition:background .18s;}
+.search-btn:hover{background:var(--ochre);}
+
+/* Sort row */
+.sort-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.sort-label{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-light);}
+.sort-btn{padding:4px 12px;border-radius:16px;border:1px solid var(--border-dark);background:var(--bg-card);color:var(--ink-light);font-size:.75rem;cursor:pointer;transition:all .18s;font-family:'Noto Serif',serif;}
+.sort-btn.active{background:var(--bg-deep);border-color:var(--ochre);color:var(--ochre);}
+.results-count{margin-left:auto;font-size:.75rem;color:var(--ink-light);font-style:italic;}
+
+.quick-tags{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px;}
+.qtag{padding:5px 12px;border-radius:20px;background:#fff8ee;border:1px solid var(--border-dark);color:var(--ochre);font-size:.77rem;cursor:pointer;transition:all .18s;font-style:italic;}
+.qtag:hover{background:var(--ochre);color:white;border-color:var(--ochre);}
+
+/* RESULT CARDS */
+.results-area{min-height:160px;}
+.results-hdr{font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-light);margin-bottom:13px;padding-bottom:7px;border-bottom:1px solid var(--border);}
+.result-card{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--saffron);border-radius:4px;padding:20px 22px;margin-bottom:13px;box-shadow:0 1px 5px var(--shadow);transition:box-shadow .2s,border-left-color .2s;}
+.result-card:hover{box-shadow:0 3px 14px var(--shadow);border-left-color:var(--ochre);}
+.result-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.mtag{font-size:.67rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:12px;font-weight:700;}
+.m-era{background:rgba(180,100,26,.12);color:var(--saffron);}
+.m-place{background:rgba(42,58,110,.1);color:var(--indigo);}
+.m-vol{background:rgba(160,53,32,.1);color:var(--terracotta);}
+.m-dyn{background:rgba(45,80,48,.1);color:var(--moss);}
+.m-scr{background:rgba(106,80,160,.1);color:#6a50a0;}
+.m-page{background:rgba(168,133,26,.15);color:var(--gold-dark);}
+.result-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:500;color:var(--ink);margin-bottom:6px;}
+.result-relig{font-size:.72rem;color:var(--gold-dark);margin-bottom:7px;font-style:italic;}
+.result-snippet{font-size:.87rem;line-height:1.72;color:var(--ink-mid);}
+/* Highlight matched terms */
+.result-snippet mark,.result-title mark{background:rgba(212,115,42,.18);color:var(--ochre);border-radius:2px;padding:0 2px;font-style:normal;}
+.result-actions{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);flex-wrap:wrap;}
+.result-src-label{font-size:.71rem;color:var(--ink-light);font-style:italic;flex:1;min-width:120px;}
+.btn-view-pdf{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--saffron);border:none;border-radius:3px;color:white;font-size:.8rem;font-family:'Noto Serif',serif;cursor:pointer;transition:background .18s;white-space:nowrap;}
+.btn-view-pdf:hover{background:var(--ochre);}
+.btn-dl{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:transparent;border:1px solid var(--border-dark);border-radius:3px;color:var(--ink-mid);font-size:.78rem;font-family:'Noto Serif',serif;text-decoration:none;transition:all .18s;white-space:nowrap;}
+.btn-dl:hover{border-color:var(--ochre);color:var(--ochre);}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;padding:20px 0 0;flex-wrap:wrap;}
+.pg-btn{padding:6px 14px;border:1px solid var(--border-dark);border-radius:3px;background:var(--bg-card);color:var(--ink-mid);cursor:pointer;font-size:.82rem;transition:all .18s;}
+.pg-btn:hover{border-color:var(--ochre);color:var(--ochre);}
+.pg-btn.active{background:var(--ochre);border-color:var(--ochre);color:white;font-weight:700;}
+.pg-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* EMPTY / SPINNER */
+.empty-state{text-align:center;padding:48px 20px;color:var(--ink-light);font-style:italic;font-size:.89rem;}
+.empty-state .ei{font-size:2.5rem;margin-bottom:12px;}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(180,100,26,.2);border-top-color:var(--saffron);border-radius:50%;animation:spin .75s linear infinite;vertical-align:middle;margin-right:8px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ══════════════════════════════════════════
+   PDF MODAL
+══════════════════════════════════════════ */
+.pdfmodal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(30,18,8,.72);backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:24px 16px;overflow-y:auto;opacity:0;pointer-events:none;transition:opacity .25s;}
+.pdfmodal-overlay.open{opacity:1;pointer-events:all;}
+.pdfmodal{background:var(--bg-card);border:1px solid var(--border-dark);border-radius:6px;box-shadow:0 20px 60px rgba(30,18,8,.5);width:100%;max-width:860px;display:flex;flex-direction:column;}
+.pdfm-header{display:flex;align-items:flex-start;gap:12px;padding:16px 20px;border-bottom:1px solid var(--border);background:var(--bg-alt);border-radius:6px 6px 0 0;}
+.pdfm-titles{flex:1;min-width:0;}
+.pdfm-title{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pdfm-vol{font-size:.75rem;color:var(--ink-light);margin-top:3px;font-style:italic;}
+.pdfm-close{flex-shrink:0;background:none;border:1px solid var(--border-dark);width:32px;height:32px;border-radius:3px;cursor:pointer;font-size:1.1rem;color:var(--ink-light);transition:all .18s;display:flex;align-items:center;justify-content:center;}
+.pdfm-close:hover{background:var(--terracotta);border-color:var(--terracotta);color:white;}
+.pdfm-pages-strip{display:flex;align-items:center;gap:8px;padding:10px 20px;background:#fffbf2;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.pdfm-pages-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-light);white-space:nowrap;}
+.pdfm-page-pill{padding:3px 10px;border-radius:14px;background:var(--saffron);color:white;font-size:.75rem;cursor:pointer;transition:all .18s;}
+.pdfm-page-pill:hover,.pdfm-page-pill.current{background:var(--ochre);outline:2px solid var(--gold);}
+.pdfm-viewer{flex:1;min-height:560px;position:relative;background:#f0e8d8;display:flex;flex-direction:column;align-items:center;overflow:auto;padding:20px;gap:16px;}
+.pdfm-viewer.iframe-mode{padding:0;}
+.pdfm-canvas-wrap{position:relative;box-shadow:0 4px 24px rgba(30,18,8,.3);background:white;display:inline-block;max-width:100%;}
+.pdfm-canvas-wrap canvas{display:block;max-width:100%;height:auto;}
+.page-num-badge{position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);font-size:.72rem;color:var(--ink-light);white-space:nowrap;background:var(--bg-alt);padding:2px 10px;border-radius:10px;border:1px solid var(--border);}
+.pdfm-iframe{width:100%;height:600px;border:none;}
+.pdfm-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:16px;color:var(--ink-light);font-style:italic;font-size:.9rem;}
+.pdfm-loading .big-spinner{width:40px;height:40px;border:3px solid rgba(180,100,26,.15);border-top-color:var(--saffron);border-radius:50%;animation:spin 1s linear infinite;}
+.pdfm-error{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:12px;color:var(--ink-mid);font-size:.88rem;text-align:center;padding:20px;}
+.pdfm-footer{display:flex;align-items:center;gap:10px;padding:12px 20px;border-top:1px solid var(--border);background:var(--bg-alt);border-radius:0 0 6px 6px;flex-wrap:wrap;}
+.pdfm-nav{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;}
+.nav-btn{background:var(--bg-card);border:1px solid var(--border-dark);border-radius:3px;padding:6px 14px;cursor:pointer;color:var(--ink-mid);font-size:.85rem;transition:all .18s;white-space:nowrap;font-family:'Noto Serif',serif;}
+.nav-btn:hover:not(:disabled){background:var(--ochre);border-color:var(--ochre);color:white;}
+.nav-btn:disabled{opacity:.4;cursor:not-allowed;}
+.page-counter{display:flex;align-items:center;gap:6px;font-size:.83rem;color:var(--ink-mid);}
+.page-jump{width:54px;padding:4px 6px;text-align:center;background:var(--bg-card);border:1px solid var(--border-dark);border-radius:3px;color:var(--ink);font-family:'Noto Serif',serif;font-size:.83rem;outline:none;}
+.page-jump:focus{border-color:var(--ochre);}
+.page-total{color:var(--ink-light);}
+.zoom-row{display:flex;align-items:center;gap:6px;}
+.zoom-btn{background:var(--bg-card);border:1px solid var(--border-dark);border-radius:3px;padding:5px 10px;cursor:pointer;color:var(--ink-mid);font-size:.8rem;transition:all .18s;}
+.zoom-btn:hover{border-color:var(--ochre);color:var(--ochre);}
+.pdfm-actions{display:flex;gap:8px;align-items:center;}
+.btn-dl-modal,.btn-newtab{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:transparent;border:1px solid var(--border-dark);border-radius:3px;color:var(--ink-mid);font-size:.8rem;text-decoration:none;transition:all .18s;white-space:nowrap;}
+.btn-dl-modal:hover{border-color:var(--ochre);color:var(--ochre);}
+.btn-newtab:hover{border-color:var(--indigo);color:var(--indigo);}
+
+/* ══════════════════════════════════════════
+   LEARN TAB
+══════════════════════════════════════════ */
+.learn-wrap{max-width:1000px;margin:0 auto;padding:36px 20px;}
+.learn-intro{text-align:center;margin-bottom:34px;background:linear-gradient(135deg,var(--bg-alt),var(--bg-card));border:1px solid var(--border);border-radius:6px;padding:28px 24px;}
+.learn-intro h2{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:400;color:var(--ink);margin-bottom:8px;}
+.learn-intro p{color:var(--ink-mid);font-size:.9rem;line-height:1.72;}
+.section-title{font-family:'Cormorant Garamond',serif;font-size:1.42rem;font-weight:400;color:var(--ink);margin-bottom:16px;display:flex;align-items:center;gap:12px;}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border-dark);}
+.tradition-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:16px;margin-bottom:42px;}
+.trad-card{background:var(--bg-card);border:1px solid var(--border);border-top:3px solid transparent;border-radius:5px;padding:22px;cursor:pointer;transition:all .25s;box-shadow:0 1px 5px var(--shadow);}
+.trad-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px var(--shadow);}
+.trad-card.advaita{border-top-color:var(--saffron);}
+.trad-card.shaiva{border-top-color:var(--terracotta);}
+.trad-card.vaishnava{border-top-color:var(--indigo);}
+.trad-card.vedic{border-top-color:var(--moss);}
+.trad-card.jain{border-top-color:var(--gold);}
+.trad-card.buddhist{border-top-color:#6a50a0;}
+.trad-icon{font-size:2rem;margin-bottom:10px;}
+.trad-title{font-family:'Cormorant Garamond',serif;font-size:1.18rem;font-weight:500;color:var(--ink);margin-bottom:4px;}
+.trad-sub{font-size:.69rem;color:var(--ochre);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;}
+.trad-desc{font-size:.82rem;line-height:1.65;color:var(--ink-mid);}
+.timeline-section{margin-bottom:42px;}
+.timeline{position:relative;padding-left:30px;margin-top:18px;}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--saffron),var(--border));}
+.tl-item{position:relative;margin-bottom:20px;}
+.tl-dot{position:absolute;left:-25px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--saffron);border:2px solid var(--bg);box-shadow:0 0 0 2px var(--saffron);}
+.tl-era{font-size:.69rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ochre);margin-bottom:3px;font-weight:700;}
+.tl-event{font-family:'Cormorant Garamond',serif;font-size:1.03rem;color:var(--ink);margin-bottom:4px;font-weight:500;}
+.tl-detail{font-size:.81rem;color:var(--ink-mid);line-height:1.65;}
+
+/* AI LEARN BOX */
+.ai-learn-box{background:var(--bg-card);border:1px solid var(--border);border-radius:5px;padding:26px;box-shadow:0 2px 12px var(--shadow);}
+.ai-learn-box h3{font-family:'Cormorant Garamond',serif;font-size:1.32rem;margin-bottom:10px;color:var(--ink);}
+.api-key-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;background:var(--bg-alt);border:1px solid var(--border);border-radius:4px;padding:8px 12px;}
+.api-key-row label{font-size:.72rem;color:var(--ink-light);white-space:nowrap;letter-spacing:.05em;}
+.api-key-input{flex:1;background:transparent;border:none;outline:none;font-family:'Noto Serif',serif;font-size:.85rem;color:var(--ink);}
+.api-key-input::placeholder{color:var(--ink-light);}
+.api-key-note{font-size:.7rem;color:var(--ink-light);margin-bottom:13px;font-style:italic;}
+.api-key-note a{color:var(--ochre);}
+.learn-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:13px;}
+.learn-chip{padding:5px 12px;border-radius:20px;background:var(--bg-alt);border:1px solid var(--border-dark);color:var(--ink-mid);font-size:.77rem;cursor:pointer;font-style:italic;transition:all .18s;}
+.learn-chip:hover{background:var(--ochre);color:white;border-color:var(--ochre);}
+.learn-prompt-row{display:flex;gap:10px;margin-bottom:12px;}
+.learn-input{flex:1;padding:11px 15px;background:var(--bg-alt);border:1.5px solid var(--border-dark);border-radius:4px;color:var(--ink);font-family:'Noto Serif',serif;font-size:.9rem;outline:none;}
+.learn-input:focus{border-color:var(--ochre);box-shadow:0 0 0 2px rgba(180,100,26,.1);}
+.learn-input::placeholder{color:var(--ink-light);}
+.learn-go{padding:11px 22px;background:var(--saffron);border:none;border-radius:4px;color:white;cursor:pointer;font-family:'Cormorant Garamond',serif;font-size:1rem;font-style:italic;transition:background .18s;white-space:nowrap;}
+.learn-go:hover{background:var(--ochre);}
+/* Rendered output */
+.learn-output{font-size:.88rem;line-height:1.82;color:var(--ink-mid);border-top:1px solid var(--border);padding-top:18px;min-height:60px;}
+.learn-output h2{font-family:'Cormorant Garamond',serif;font-size:1.45rem;font-weight:500;color:var(--ink);margin:20px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--border);}
+.learn-output h3{font-family:'Cormorant Garamond',serif;font-size:1.22rem;font-weight:500;color:var(--ochre);margin:18px 0 6px;}
+.learn-output h4{font-family:'Cormorant Garamond',serif;font-size:1.08rem;font-weight:500;color:var(--saffron);margin:14px 0 5px;}
+.learn-output p{margin-bottom:13px;}
+.learn-output strong,.learn-output b{color:var(--ochre);font-weight:700;}
+.learn-output em,.learn-output i{font-style:italic;}
+.learn-output ul,.learn-output ol{margin:0 0 13px 0;padding-left:22px;}
+.learn-output li{margin-bottom:5px;}
+.learn-output ul li{list-style:none;position:relative;padding-left:14px;}
+.learn-output ul li::before{content:'◦';position:absolute;left:0;color:var(--saffron);}
+.learn-output ol li{list-style:decimal;}
+.learn-output blockquote{border-left:3px solid var(--saffron);margin:12px 0;padding:8px 16px;background:var(--bg-alt);border-radius:0 3px 3px 0;font-style:italic;}
+.learn-output hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
+
+footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px solid var(--border-dark);text-align:center;padding:24px 20px;font-size:.73rem;color:var(--ink-light);font-style:italic;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:var(--bg-alt);}
+::-webkit-scrollbar-thumb{background:var(--border-dark);border-radius:3px;}
+@media(max-width:640px){.tradition-grid{grid-template-columns:1fr;}.year-range{flex-direction:column;}.pdfm-footer{flex-direction:column;}.pdfm-nav{flex-wrap:wrap;}}
+</style>
+</head>
+<body>
+
+<!-- PDF MODAL -->
+<div class="pdfmodal-overlay" id="pdfOverlay" onclick="closePDFModal(event)">
+  <div class="pdfmodal" id="pdfModal">
+    <div class="pdfm-header">
+      <div class="pdfm-titles">
+        <div class="pdfm-title" id="pdfmTitle">Loading…</div>
+        <div class="pdfm-vol" id="pdfmVol"></div>
+      </div>
+      <button class="pdfm-close" onclick="closePDFModal()">✕</button>
+    </div>
+    <div class="pdfm-pages-strip" id="pdfmStrip" style="display:none">
+      <span class="pdfm-pages-label">Article pages:</span>
+      <div id="pdfmPills" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div class="pdfm-viewer" id="pdfmViewer">
+      <div class="pdfm-loading"><div class="big-spinner"></div><span>Loading document…</span></div>
+    </div>
+    <div class="pdfm-footer">
+      <div class="pdfm-nav">
+        <button class="nav-btn" id="btnPrev" onclick="pdfGoPage(-1)" disabled>◀ Prev</button>
+        <div class="page-counter">
+          <span>Page</span>
+          <input class="page-jump" id="pageJump" type="number" min="1" value="1" onchange="pdfJumpPage(this.value)" onkeydown="if(event.key==='Enter')pdfJumpPage(this.value)">
+          <span class="page-total">of <span id="pageTotalTxt">—</span></span>
+        </div>
+        <button class="nav-btn" id="btnNext" onclick="pdfGoPage(1)" disabled>Next ▶</button>
+        <div class="zoom-row">
+          <button class="zoom-btn" onclick="pdfZoom(-0.2)">－</button>
+          <span id="zoomLabel" style="font-size:.75rem;color:var(--ink-light);min-width:36px;text-align:center;">100%</span>
+          <button class="zoom-btn" onclick="pdfZoom(0.2)">＋</button>
+        </div>
+      </div>
+      <div class="pdfm-actions">
+        <a class="btn-newtab" id="btnNewTab" href="#" target="_blank">↗ Open Tab</a>
+        <a class="btn-dl-modal" id="btnDl" href="#" download>⬇ Download PDF</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE -->
+<header>
+  <span class="om-symbol">ॐ</span>
+  <h1><em>Śilālipi</em> — Stone Script Portal</h1>
+  <p class="subtitle">Epigraphia Indica (Vols. 1–36 + Appendices) · Epigraphia Carnatica · Archaeological Survey of India</p>
+  <div class="divider"><div class="divider-line"></div><span style="color:var(--ochre)">❦</span><div class="divider-line"></div></div>
+</header>
+
+<div id="indexBar">
+  <span id="indexStatus"><span class="spinner"></span> Loading search index…</span>
+</div>
+
+<div class="vol-selector">
+  <div class="vol-header">
+    <span class="vol-label">Filter Volume</span>
+    <span class="vol-badge" id="volBadge">41 sources</span>
+    <div class="vol-scroll" id="volScroll">
+      <span class="vol-chip active" data-id="all">All Volumes</span>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <button class="tab-btn active" onclick="switchTab('search')">⚲ &nbsp;Search Inscriptions</button>
+  <button class="tab-btn" onclick="switchTab('learn')">◎ &nbsp;Learn & Explore</button>
+</nav>
+
+<main>
+
+<!-- SEARCH TAB -->
+<div id="tab-search" class="tab-pane active">
+<div class="search-wrap">
+
+  <div class="search-hero">"Inscriptions are the imperishable memory of civilisation — stone outlasts manuscript, metal outlasts stone, and truth outlasts both."</div>
+
+  <div class="filter-row">
+    <button class="filter-pill active" onclick="setFilter('all',this)">✦ All</button>
+    <button class="filter-pill" onclick="setFilter('era',this)">☽ Era / Year</button>
+    <button class="filter-pill" onclick="setFilter('place',this)">⊕ Region &amp; Place</button>
+    <button class="filter-pill" onclick="setFilter('dynasty',this)">⚜ Dynasty</button>
+    <button class="filter-pill" onclick="setFilter('religion',this)"><span style="display:inline-block;transform:scaleY(-1)">卍</span> Religion &amp; Deity</button>
+    <button class="filter-pill" onclick="setFilter('script',this)">Ā Script &amp; Language</button>
+  </div>
+
+  <div class="year-range" id="yearRange" style="display:none">
+    <input class="year-input" id="yearFrom" placeholder="From CE (e.g. 300)" type="number" />
+    <input class="year-input" id="yearTo"   placeholder="To CE (e.g. 1200)" type="number" />
+  </div>
+
+  <div class="search-box-wrap">
+    <input class="search-input" id="searchInput" placeholder="Search 40,000+ pages of inscriptions… try 'Chalukya Shiva temple' or 'copper plate grant'" />
+    <button class="search-btn" onclick="doSearch()">🔍</button>
+  </div>
+
+  <div class="sort-row">
+    <span class="sort-label">Sort:</span>
+    <button class="sort-btn active" onclick="setSort('relevance',this)">Relevance</button>
+    <button class="sort-btn" onclick="setSort('era',this)">Era</button>
+    <button class="sort-btn" onclick="setSort('volume',this)">Volume</button>
+    <span class="results-count" id="resultsCount"></span>
+  </div>
+
+  <div class="quick-tags">
+    <span class="qtag" onclick="quickSearch('Advaita Vedanta matha Shankaracharya')">Adi Shankaracharya</span>
+    <span class="qtag" onclick="quickSearch('Brihadeeshvara temple Chola devadana')">Chola Temples</span>
+    <span class="qtag" onclick="quickSearch('Chalukya Badami cave Pulakesi')">Badami Chalukyas</span>
+    <span class="qtag" onclick="quickSearch('Rashtrakuta copper plate agrahara')">Rashtrakuta Grants</span>
+    <span class="qtag" onclick="quickSearch('Hoysala Belur Halebidu Kannada')">Hoysala Karnataka</span>
+    <span class="qtag" onclick="quickSearch('Pallava Mahabalipuram prashasti')">Pallava Records</span>
+    <span class="qtag" onclick="quickSearch('Vijayanagara Hampi Madhva')">Vijayanagara Hampi</span>
+    <span class="qtag" onclick="quickSearch('Satavahana Brahmi Prakrit donative')">Satavahana Brahmi</span>
+    <span class="qtag" onclick="quickSearch('Ashvamedha Rajasuya yajna Vedic')">Vedic Yajnas</span>
+    <span class="qtag" onclick="quickSearch('Gomateshvara Jain Ganga Karnataka')">Ganga Jain Records</span>
+    <span class="qtag" onclick="quickSearch('Gupta prashasti Sanskrit land grant')">Gupta Prashastis</span>
+    <span class="qtag" onclick="quickSearch('Ashoka pillar edict Brahmi dhamma')">Ashokan Edicts</span>
+  </div>
+
+  <div class="results-area" id="resultsArea">
+    <div class="empty-state">
+      <div class="ei">🏛️</div>
+      <span id="emptyMsg">Waiting for search index to load…</span>
+    </div>
+  </div>
+  <div id="pagination" class="pagination"></div>
+
+</div>
+</div>
+
+<!-- LEARN TAB -->
+<div id="tab-learn" class="tab-pane">
+<div class="learn-wrap">
+  <div class="learn-intro">
+    <h2>Dharmic Traditions in Stone</h2>
+    <p>Over 1,500 years of epigraphic evidence reveals the living continuity of India's philosophical, religious and cultural traditions —<br>from early Vedic yajnas to the great Agamic temple civilisations of South India.</p>
+  </div>
+
+  <div class="section-title">Sacred Traditions</div>
+  <div class="tradition-grid">
+    <div class="trad-card advaita" onclick="explainTradition('advaita')"><div class="trad-icon">🕉️</div><div class="trad-title">Advaita Vedānta</div><div class="trad-sub">Non-Dual Philosophy</div><div class="trad-desc">Inscriptions document Shankaracharya's mathas, Vedantic debate traditions, and the spread of Advaita philosophy from Kerala to Kashmir.</div></div>
+    <div class="trad-card shaiva" onclick="explainTradition('shaiva')"><div class="trad-icon">🔱</div><div class="trad-title">Shaiva Āgama</div><div class="trad-sub">Tradition of Shiva</div><div class="trad-desc">From Pashupata seals to Lingayat copper plates — temple grants, pilgrim records, and Shaiva theological inscriptions across the Deccan and Tamil Nadu.</div></div>
+    <div class="trad-card vaishnava" onclick="explainTradition('vaishnava')"><div class="trad-icon">🪷</div><div class="trad-title">Vaishnava Traditions</div><div class="trad-sub">Bhakti &amp; Pāñcharātra</div><div class="trad-desc">Alvar saints, Ramanuja's Vishishtadvaita, Madhva's Dvaita — Vaishnava temple charters from Chola, Pallava and Vijayanagara periods.</div></div>
+    <div class="trad-card vedic" onclick="explainTradition('vedic')"><div class="trad-icon">🔥</div><div class="trad-title">Vedic Yajña Tradition</div><div class="trad-sub">Ritual &amp; Sacrifice</div><div class="trad-desc">Agnihotra, Ashvamedha, Vajapeya records — epigraphic evidence of great Vedic sacrificial traditions performed by kings and Brahmin communities.</div></div>
+    <div class="trad-card jain" onclick="explainTradition('jain')"><div class="trad-icon">☸️</div><div class="trad-title">Jaina Tradition</div><div class="trad-sub">Ahimsa &amp; Liberation</div><div class="trad-desc">Epigraphia Carnatica's richest corpus — Gomateshvara, Ganga dynasty records, Digambara matha traditions across Karnataka.</div></div>
+    <div class="trad-card buddhist" onclick="explainTradition('buddhist')"><div class="trad-icon">🙏</div><div class="trad-title">Buddhist Heritage</div><div class="trad-sub">Dhamma &amp; Sangha</div><div class="trad-desc">Ashokan edicts, stupa donative records at Sanchi, Amaravati, Nagarjunakonda — the epigraphic foundations of the Buddhist world.</div></div>
+  </div>
+
+  <div class="timeline-section">
+    <div class="section-title">Epigraphic Timeline of India</div>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-dot"></div><div class="tl-era">c. 300 BCE</div><div class="tl-event">Ashokan Brahmi Edicts</div><div class="tl-detail">Emperor Ashoka's rock and pillar edicts mark the dawn of systematic Indian epigraphy. Dhamma proclamations inscribed in Brahmi across the subcontinent.</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--indigo)"></div><div class="tl-era">1st–3rd Century CE</div><div class="tl-event">Satavahana &amp; Kushana Records</div><div class="tl-detail">Buddhist donative inscriptions at Sanchi, Amaravati, Nagarjunakonda. Trade-routes, guilds, and royal gifts documented in Brahmi and Kharosthi scripts.</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--gold)"></div><div class="tl-era">4th–6th Century CE</div><div class="tl-event">Gupta Golden Age</div><div class="tl-detail">Elaborate Sanskrit prashastis, land grants, and temple endowments. Vedic yajnas revived under Samudragupta. Shaiva-Vaishnava temple-building begins.</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--terracotta)"></div><div class="tl-era">6th–8th Century CE</div><div class="tl-event">Chalukya &amp; Pallava Florescence</div><div class="tl-detail">Badami cave inscriptions, Mahendravarman's rock-cut temples, Mahabalipuram. Kannada, Telugu and Tamil scripts crystallise from Brahmi.</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--saffron)"></div><div class="tl-era">8th–10th Century CE</div><div class="tl-event">Rashtrakuta Empire &amp; Advaita Tradition</div><div class="tl-detail">Rashtrakuta copper-plate grants document wide religious pluralism across the Deccan. Inscriptions in this period reference Advaita Vedanta mathas and Shaiva-Vaishnava endowments — dates for individual figures shown here are drawn from EI records only. <span style="font-size:.74rem;color:var(--ink-light);font-style:italic">[EI corpus, 8th–10th c. records]</span></div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--moss)"></div><div class="tl-era">9th–13th Century CE</div><div class="tl-event">Chola Temple Civilisation</div><div class="tl-detail">Thousands of inscriptions at Brihadeeshvara, Gangaikondacholapuram — devadana land grants, devadasi services, and elaborate Agamic rites.</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--lotus)"></div><div class="tl-era">12th–14th Century CE</div><div class="tl-event">Hoysala, Kakatiya &amp; Reform Movements</div><div class="tl-detail">Kannada and Telugu inscriptions from Belur, Halebidu, Warangal. Basavanna's Veerashaiva reform and Ramanujacharya's Vishishtadvaita documented in stone.</div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--gold)"></div><div class="tl-era">14th–17th Century CE</div><div class="tl-event">Vijayanagara — Last Great Hindu Empire</div><div class="tl-detail">Hampi inscriptions document the empire's vast temple economy, Sanskrit and Kannada court culture, Madhva Vedanta patronage, and classical performing arts.</div></div>
+    </div>
+  </div>
+
+  <div class="ai-learn-box">
+    <h3>🪔 Deep Dive — Ask About Any Tradition or Inscription</h3>
+    <div class="api-key-row">
+      <label>CLAUDE API KEY</label>
+      <input class="api-key-input" id="apiKeyInput" type="password" placeholder="sk-ant-… (stored only in this browser tab, never sent anywhere else)" />
+    </div>
+    <p class="api-key-note">Get a free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Your key is used only for the Learn tab and stays in your browser.</p>
+    <div class="learn-chips">
+      <span class="learn-chip" onclick="learnAsk('What do Epigraphia Indica inscriptions reveal about Advaita Vedanta and the mathas of Adi Shankaracharya?')">Advaita &amp; Shankara's Mathas</span>
+      <span class="learn-chip" onclick="learnAsk('How do inscriptions document the Vedic yajna tradition and Brahminic learning across India?')">Vedic Yajna Tradition</span>
+      <span class="learn-chip" onclick="learnAsk('What is the epigraphic evidence for Shaiva Agama and Lingayat traditions in Karnataka?')">Shaiva Agama Karnataka</span>
+      <span class="learn-chip" onclick="learnAsk('Describe the Chola temple economy, Agamic worship and devadasi system as documented in inscriptions')">Chola Temple Economy</span>
+      <span class="learn-chip" onclick="learnAsk('What do inscriptions tell us about the role of women — queens, devadasis, donors — in ancient India?')">Women in Inscriptions</span>
+      <span class="learn-chip" onclick="learnAsk('How does Epigraphia Carnatica document Kannada culture, the Ganga dynasty and Jain traditions?')">Epigraphia Carnatica</span>
+      <span class="learn-chip" onclick="learnAsk('What does Epigraphia Indica tell us about Madhva Vedanta and the Udupi matha tradition?')">Madhva Vedanta &amp; Udupi</span>
+      <span class="learn-chip" onclick="learnAsk('Explain the significance of Sanskrit prashastis and how Gupta-era inscriptions document Indian civilisation')">Gupta Sanskrit Prashastis</span>
+    </div>
+    <div class="learn-prompt-row">
+      <input class="learn-input" id="learnInput" placeholder="Ask anything — tradition, ruler, inscription, philosophy, dynasty…" />
+      <button class="learn-go" onclick="doLearnAsk()">Illuminate ✦</button>
+    </div>
+    <div class="learn-output" id="learnOutput">
+      <span style="color:var(--ink-light);font-style:italic">Select a tradition card, click a topic chip, or type your own question…</span>
+    </div>
+  </div>
+</div>
+</div>
+</main>
+
+<footer>
+  Search powered by <strong>MiniSearch</strong> — fully local, no server · Learn tab uses Claude API (your key) · Sources: Epigraphia Indica Vols. 1–36 (ASI, 1892–1965) · Epigraphia Carnatica (B.L. Rice, 1886–1912)
+</footer>
+
+<!-- Load the pre-built index (generated by preprocess.py) -->
+<!-- In production this file is committed to your GitHub repo -->
+<script src="search_index.js" onerror="onIndexLoadError()"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════
+   VOLUME MANIFEST (for chips — not for search; search uses index)
+═══════════════════════════════════════════════════════ */
+const BASE='https://library.bjp.org/jspui/bitstream/123456789/1910/';
+const VOLUMES=[
+  {id:'v01',label:'EI Vol.1',  url:BASE+'30/epigraphia-indica-vol-01.pdf'},
+  {id:'v02',label:'EI Vol.2',  url:BASE+'31/epigraphia-indica-vol-02.pdf'},
+  {id:'v03',label:'EI Vol.3',  url:BASE+'32/epigraphia-indica-vol-03.pdf'},
+  {id:'v04',label:'EI Vol.4',  url:BASE+'33/epigraphia-indica-vol-04.pdf'},
+  {id:'v05',label:'EI Vol.5',  url:BASE+'34/epigraphia-indica-vol-05.pdf'},
+  {id:'v06',label:'EI Vol.6',  url:BASE+'35/epigraphia-indica-vol-06.pdf'},
+  {id:'v07',label:'EI Vol.7',  url:BASE+'36/epigraphia-indica-vol-07.pdf'},
+  {id:'v08',label:'EI Vol.8',  url:BASE+'37/epigraphia-indica-vol-08-1905-1906.pdf'},
+  {id:'v09',label:'EI Vol.9',  url:BASE+'38/epigraphia-indica-vol-09.pdf'},
+  {id:'v10',label:'EI Vol.10', url:BASE+'39/epigraphia-indica-vol-10.pdf'},
+  {id:'v11',label:'EI Vol.11', url:BASE+'1/epigraphia-indica-vol-11.pdf'},
+  {id:'v12',label:'EI Vol.12', url:BASE+'2/epigraphia-indica-vol-12.pdf'},
+  {id:'v13',label:'EI Vol.13', url:BASE+'3/epigraphia-indica-vol-13.pdf'},
+  {id:'v14',label:'EI Vol.14', url:BASE+'4/epigraphia-indica-vol-14.pdf'},
+  {id:'v15a',label:'EI Vol.15 (I)',  url:BASE+'5/epigraphia-indica-vol-15-vol-01.pdf'},
+  {id:'v15b',label:'EI Vol.15 (II)', url:BASE+'6/epigraphia-indica-vol-15-vol-02.pdf'},
+  {id:'v16',label:'EI Vol.16', url:BASE+'7/epigraphia-indica-vol-16.pdf'},
+  {id:'v17',label:'EI Vol.17', url:BASE+'8/epigraphia-indica-vol-17.pdf'},
+  {id:'v18',label:'EI Vol.18', url:BASE+'9/epigraphia-indica-vol-18.pdf'},
+  {id:'v19',label:'EI Vol.19', url:BASE+'10/epigraphia-indica-vol-19.pdf'},
+  {id:'v20',label:'EI Vol.20', url:BASE+'11/epigraphia-indica-vol-20.pdf'},
+  {id:'v21',label:'EI Vol.21', url:BASE+'12/epigraphia-indica-vol-21.pdf'},
+  {id:'v22',label:'EI Vol.22', url:BASE+'13/epigraphia-indica-vol-22.pdf'},
+  {id:'v23',label:'EI Vol.23', url:BASE+'14/epigraphia-indica-vol-23.pdf'},
+  {id:'v24',label:'EI Vol.24', url:BASE+'15/epigraphia-indica-vol-24.pdf'},
+  {id:'v25',label:'EI Vol.25', url:BASE+'16/epigraphia-indica-vol-25.pdf'},
+  {id:'v26',label:'EI Vol.26', url:BASE+'17/epigraphia-indica-vol-26.pdf'},
+  {id:'v27',label:'EI Vol.27', url:BASE+'18/epigraphia-indica-vol-27.pdf'},
+  {id:'v28',label:'EI Vol.28', url:BASE+'19/epigraphia-indica-vol-28.pdf'},
+  {id:'v29',label:'EI Vol.29', url:BASE+'20/epigraphia-indica-vol-29.pdf'},
+  {id:'v30',label:'EI Vol.30', url:BASE+'21/epigraphia-indica-vol-30.pdf'},
+  {id:'v31',label:'EI Vol.31', url:BASE+'22/epigraphia-indica-vol-31.pdf'},
+  {id:'v32',label:'EI Vol.32', url:BASE+'23/epigraphia-indica-vol-32.pdf'},
+  {id:'v33',label:'EI Vol.33', url:BASE+'24/epigraphia-indica-vol-33.pdf'},
+  {id:'v34',label:'EI Vol.34', url:BASE+'25/epigraphia-indica-vol-34.pdf'},
+  {id:'v35',label:'EI Vol.35', url:BASE+'26/epigraphia-indica-vol-35.pdf'},
+  {id:'v36',label:'EI Vol.36', url:BASE+'27/epigraphia-indica-vol-36.pdf'},
+  {id:'app10',  label:'Appendix Vol.10',   url:BASE+'29/appendix-to-epigraphia-indica-vol-10.pdf',appendix:true},
+  {id:'app1923',label:'Appendix Vol.19–23',url:BASE+'28/appendix-to-epigraphia-indica-and-record-of-the-archeological-survey-of-india-vol-19-23.pdf',appendix:true},
+  {id:'ec',     label:'Epigraphia Carnatica',url:'https://library.bjp.org/jspui/',appendix:true},
+];
+
+// Build volume chips
+const scroll=document.getElementById('volScroll');
+VOLUMES.forEach(v=>{
+  const c=document.createElement('span');
+  c.className='vol-chip'+(v.appendix?' appendix':'');
+  c.textContent=v.label; c.dataset.id=v.id;
+  c.onclick=()=>{
+    document.querySelectorAll('.vol-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    if(lastQuery) doSearch();
+  };
+  scroll.appendChild(c);
+});
+
+/* ═══════════════════════════════════════════════════════
+   MINISEARCH ENGINE
+═══════════════════════════════════════════════════════ */
+let miniSearch=null;
+let allDocs=[];
+let indexReady=false;
+
+function onIndexLoadError(){
+  document.getElementById('indexStatus').innerHTML=
+    '<span class="index-warn">⚠️ search_index.js not found. '+
+    'Run <code>python preprocess.py</code> first, then copy <code>search_index.js</code> here. '+
+    'The <em>Learn</em> tab still works.</span>';
+  document.getElementById('emptyMsg').innerHTML=
+    '⚠️ No index loaded. Run <strong>preprocess.py</strong> to build the search index, '+
+    'then put <strong>search_index.js</strong> in the same folder as index.html.';
+}
+
+function initSearch(){
+  // window.SILALIPI_INDEX is set by search_index.js
+  if(typeof window.SILALIPI_INDEX==='undefined') return;
+  allDocs=window.SILALIPI_INDEX;
+
+  miniSearch=new MiniSearch({
+    fields:['title','snippet','text','era','place','dynasty','religion','script','volume'],
+    storeFields:['id','title','volume','volId','page','pageEnd','era','place','dynasty','religion','script','snippet','url'],
+    searchOptions:{
+      boost:{title:4,era:2,place:2,dynasty:2,religion:2,snippet:1.5,text:1},
+      fuzzy:0.2,
+      prefix:true,
+    }
+  });
+
+  miniSearch.addAll(allDocs);
+  indexReady=true;
+
+  const meta=window.SILALIPI_META||{};
+  const articles=meta.total_articles||allDocs.length;
+  const vols=meta.volumes||'?';
+  document.getElementById('indexStatus').innerHTML=
+    '<span class="index-ok">✓ Index loaded — </span>'+
+    '<strong>'+articles.toLocaleString()+' inscription articles</strong> from '+
+    '<strong>'+vols+' volumes</strong> · fully local, instant search'+
+    (meta.sample_mode?' <em>(sample mode — run without --sample for full index)</em>':'');
+  document.getElementById('emptyMsg').textContent=
+    'Type a search above or click a quick tag to explore the corpus.';
+}
+
+// Try to init after page load (index script may load asynchronously)
+window.addEventListener('load',()=>setTimeout(initSearch,200));
+
+/* ═══════════════════════════════════════════════════════
+   SEARCH STATE
+═══════════════════════════════════════════════════════ */
+let lastQuery='';
+let lastResults=[];
+let currentPage=1;
+let sortMode='relevance';
+let activeFilter='all';
+const PAGE_SIZE=10;
+
+function switchTab(t){
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===(t==='search'?0:1)));
+  document.getElementById('tab-search').classList.toggle('active',t==='search');
+  document.getElementById('tab-learn').classList.toggle('active',t==='learn');
+}
+
+function setFilter(f,el){
+  activeFilter=f;
+  document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  const showYear=(f==='era');
+  document.getElementById('yearRange').style.display=showYear?'flex':'none';
+  const ph={
+    all:'Search 40,000+ pages of inscriptions… try "Chalukya Shiva temple" or "copper plate grant"',
+    era:'Search by era… e.g. "7th century" or "Saka 600" or "Gupta period"',
+    place:'Search by place… e.g. "Badami" "Kanchi" "Hampi" "Mysore"',
+    dynasty:'Search by dynasty… e.g. "Chola" "Hoysala" "Vijayanagara"',
+    religion:'Search by tradition… e.g. "Shaiva" "Vishnu" "Advaita" "Jain"',
+    script:'Search by script… e.g. "Brahmi" "Grantha" "Kannada" "Tamil"',
+  };
+  document.getElementById('searchInput').placeholder=ph[f]||ph.all;
+  if(lastQuery) doSearch();
+}
+
+function setSort(s,el){
+  sortMode=s;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  if(lastResults.length) renderPage(1);
+}
+
+function quickSearch(q){
+  document.getElementById('searchInput').value=q;
+  doSearch();
+}
+
+function getActiveVolId(){
+  const chip=document.querySelector('.vol-chip.active');
+  return (chip&&chip.dataset.id!=='all')?chip.dataset.id:null;
+}
+
+function doSearch(){
+  if(!indexReady){
+    document.getElementById('resultsArea').innerHTML=
+      '<div class="empty-state"><div class="ei">⏳</div>Index is still loading — please wait a moment.</div>';
+    return;
+  }
+  const query=document.getElementById('searchInput').value.trim();
+  lastQuery=query;
+  if(!query){ clearResults(); return; }
+
+  // Build MiniSearch options
+  const opts={
+    boost:{title:4,era:2,place:2,dynasty:2,religion:2,snippet:1.5},
+    fuzzy:0.2,prefix:true,
+  };
+
+  // Field-specific boost based on active filter
+  const fieldBoost={
+    era:    {era:5,text:1},
+    place:  {place:5,snippet:2,text:1},
+    dynasty:{dynasty:5,snippet:2,text:1},
+    religion:{religion:5,snippet:2,text:1},
+    script: {script:5,text:1},
+  }[activeFilter];
+  if(fieldBoost) opts.boost=fieldBoost;
+
+  let results=miniSearch.search(query,opts);
+
+  // Volume filter
+  const volId=getActiveVolId();
+  if(volId) results=results.filter(r=>r.volId===volId);
+
+  // Year range filter (numeric CE years in era field)
+  const yFrom=parseInt(document.getElementById('yearFrom')?.value);
+  const yTo=parseInt(document.getElementById('yearTo')?.value);
+  if(!isNaN(yFrom)||!isNaN(yTo)){
+    results=results.filter(r=>{
+      const yearMatch=r.era.match(/\b(\d{3,4})\s*(?:CE|AD|A\.D\.)\b/i)||r.era.match(/(\d{3,4})/);
+      if(!yearMatch) return true; // keep if no year found
+      const y=parseInt(yearMatch[1]);
+      if(!isNaN(yFrom)&&y<yFrom) return false;
+      if(!isNaN(yTo)  &&y>yTo)   return false;
+      return true;
+    });
+  }
+
+  // Sort
+  if(sortMode==='era'){
+    results.sort((a,b)=>{
+      const ya=extractYear(a.era), yb=extractYear(b.era);
+      return (ya||9999)-(yb||9999);
+    });
+  } else if(sortMode==='volume'){
+    results.sort((a,b)=>a.volume.localeCompare(b.volume));
+  }
+  // relevance: keep MiniSearch score order (default)
+
+  lastResults=results;
+  document.getElementById('resultsCount').textContent=
+    results.length>0?results.length.toLocaleString()+' results':'No results';
+  renderPage(1);
+}
+
+function extractYear(eraStr){
+  if(!eraStr) return null;
+  const m=eraStr.match(/\b(\d{3,4})\b/);
+  return m?parseInt(m[1]):null;
+}
+
+function clearResults(){
+  lastResults=[];
+  document.getElementById('resultsArea').innerHTML=
+    '<div class="empty-state"><div class="ei">🏛️</div>'+
+    document.getElementById('emptyMsg').textContent+'</div>';
+  document.getElementById('pagination').innerHTML='';
+  document.getElementById('resultsCount').textContent='';
+}
+
+function renderPage(pg){
+  currentPage=pg;
+  const area=document.getElementById('resultsArea');
+  const pgDiv=document.getElementById('pagination');
+
+  if(!lastResults.length){
+    area.innerHTML='<div class="empty-state"><div class="ei">🔍</div>No inscriptions matched "<em>'+escHtml(lastQuery)+'</em>".<br>Try broader terms or a different filter.</div>';
+    pgDiv.innerHTML=''; return;
+  }
+
+  const total=lastResults.length;
+  const totalPages=Math.ceil(total/PAGE_SIZE);
+  const slice=lastResults.slice((pg-1)*PAGE_SIZE, pg*PAGE_SIZE);
+
+  area.innerHTML=
+    '<div class="results-hdr">Showing '+(((pg-1)*PAGE_SIZE)+1)+'–'+
+    Math.min(pg*PAGE_SIZE,total)+' of '+total.toLocaleString()+
+    ' results for "'+escHtml(lastQuery)+'"</div>'+
+    slice.map(r=>buildCard(r)).join('');
+
+  // Pagination
+  pgDiv.innerHTML='';
+  if(totalPages>1){
+    const addBtn=(label,target,disabled,active)=>{
+      const b=document.createElement('button');
+      b.className='pg-btn'+(active?' active':'');
+      b.textContent=label; b.disabled=disabled;
+      b.onclick=()=>{ renderPage(target); window.scrollTo({top:0,behavior:'smooth'}); };
+      pgDiv.appendChild(b);
+    };
+    addBtn('◀',pg-1,pg===1,false);
+    // Show up to 7 page buttons
+    let start=Math.max(1,pg-3), end=Math.min(totalPages,start+6);
+    start=Math.max(1,end-6);
+    if(start>1){ addBtn('1',1,false,false); if(start>2){const e=document.createElement('span');e.textContent='…';e.style.cssText='padding:0 6px;color:var(--ink-light)';pgDiv.appendChild(e);}}
+    for(let i=start;i<=end;i++) addBtn(i,i,false,i===pg);
+    if(end<totalPages){const e=document.createElement('span');e.textContent='…';e.style.cssText='padding:0 6px;color:var(--ink-light)';pgDiv.appendChild(e); addBtn(totalPages,totalPages,false,false);}
+    addBtn('▶',pg+1,pg===totalPages,false);
+  }
+}
+
+function buildCard(r){
+  // Highlight matched terms in title and snippet
+  const terms=(lastQuery||'').toLowerCase().split(/\s+/).filter(t=>t.length>2);
+  const highlight=(str)=>{
+    if(!str||!terms.length) return escHtml(str||'');
+    let out=escHtml(str);
+    terms.forEach(t=>{
+      const re=new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')', 'gi');
+      out=out.replace(re,'<mark>$1</mark>');
+    });
+    return out;
+  };
+
+  const pages=[];
+  if(r.page){
+    const s=r.page, e=r.pageEnd||r.page;
+    for(let p=s;p<=Math.min(e,s+5);p++) pages.push(p);
+  }
+  const pagesLabel=pages.length?pages.map(p=>'p.'+p).join(', '):'';
+  const dlUrl=r.url||'#';
+
+  const viewBtn=(dlUrl&&dlUrl!=='#')
+    ?`<button class="btn-view-pdf" onclick='openPDFModal(${JSON.stringify(r.title||'')},${JSON.stringify(r.volume||'')},${JSON.stringify(dlUrl)},${JSON.stringify(pages)},${pages[0]||1})'>
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="white"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+        Read in Portal
+      </button>`
+    :'';
+  const dlBtn=(dlUrl&&dlUrl!=='#')
+    ?`<a class="btn-dl" href="${dlUrl}" target="_blank">⬇ Download PDF</a>`:'';
+
+  return `<div class="result-card">
+    <div class="result-meta">
+      ${r.era     ?`<span class="mtag m-era">⏳ ${escHtml(r.era)}</span>`:''}
+      ${r.place   ?`<span class="mtag m-place">📍 ${escHtml(r.place)}</span>`:''}
+      ${r.volume  ?`<span class="mtag m-vol">📖 ${escHtml(r.volume)}</span>`:''}
+      ${r.dynasty ?`<span class="mtag m-dyn">⚜ ${escHtml(r.dynasty)}</span>`:''}
+      ${r.script  ?`<span class="mtag m-scr">Ā ${escHtml(r.script)}</span>`:''}
+      ${pagesLabel?`<span class="mtag m-page">🔖 pp. ${pagesLabel}</span>`:''}
+    </div>
+    <div class="result-title">${highlight(r.title)||'Untitled Inscription'}</div>
+    ${r.religion?`<div class="result-relig">✦ ${escHtml(r.religion)}</div>`:''}
+    <div class="result-snippet">${highlight(r.snippet)}</div>
+    <div class="result-actions">
+      <div class="result-src-label">${escHtml(r.volume||'Epigraphia Indica')} — Archaeological Survey of India</div>
+      ${viewBtn}
+      ${dlBtn}
+    </div>
+  </div>`;
+}
+
+function escHtml(s){
+  if(!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+document.getElementById('yearFrom')?.addEventListener('change',()=>{if(lastQuery)doSearch();});
+document.getElementById('yearTo')?.addEventListener('change',()=>{if(lastQuery)doSearch();});
+
+/* ═══════════════════════════════════════════════════════
+   PDF VIEWER
+═══════════════════════════════════════════════════════ */
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+let pdfState={doc:null,currentPage:1,totalPages:0,zoom:1.0,url:'',relevantPages:[],rendering:false};
+
+async function openPDFModal(title,volLabel,url,pages,startPage){
+  Object.assign(pdfState,{url,relevantPages:pages||[],currentPage:startPage||(pages&&pages[0])||1,doc:null,zoom:1.0,rendering:false});
+  document.getElementById('pdfmTitle').textContent=title;
+  document.getElementById('pdfmVol').textContent=volLabel||'';
+  document.getElementById('btnNewTab').href=url;
+  document.getElementById('btnDl').href=url;
+  document.getElementById('zoomLabel').textContent='100%';
+  const strip=document.getElementById('pdfmStrip');
+  const pills=document.getElementById('pdfmPills');
+  pills.innerHTML='';
+  if(pages&&pages.length){
+    strip.style.display='flex';
+    pages.forEach(pg=>{const p=document.createElement('span');p.className='pdfm-page-pill';p.textContent='p.'+pg;p.onclick=()=>pdfGoToPage(pg);pills.appendChild(p);});
+  } else strip.style.display='none';
+  document.getElementById('pdfOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  renderPDFView();
+}
+
+function closePDFModal(e){
+  if(e&&e.target!==document.getElementById('pdfOverlay')) return;
+  document.getElementById('pdfOverlay').classList.remove('open');
+  document.body.style.overflow='';
+  if(pdfState.doc){pdfState.doc.destroy();pdfState.doc=null;}
+}
+
+async function renderPDFView(){
+  const viewer=document.getElementById('pdfmViewer');
+  viewer.classList.remove('iframe-mode');
+  viewer.innerHTML='<div class="pdfm-loading"><div class="big-spinner"></div><span>Loading document…</span></div>';
+  updateNavButtons();
+  try{
+    const task=pdfjsLib.getDocument({url:pdfState.url,withCredentials:false});
+    const doc=await Promise.race([task.promise,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),8000))]);
+    pdfState.doc=doc; pdfState.totalPages=doc.numPages;
+    document.getElementById('pageTotalTxt').textContent=doc.numPages;
+    document.getElementById('pageJump').max=doc.numPages;
+    await renderPage(pdfState.currentPage);
+    updateNavButtons(); updatePagePills();
+  }catch(err){
+    // Fall back to Google Docs viewer
+    const enc=encodeURIComponent(pdfState.url);
+    const hint=pdfState.relevantPages.length?'<div style="background:#fffbf2;padding:10px 16px;font-size:.8rem;color:var(--ochre);text-align:center;border-bottom:1px solid var(--border)">📌 Article pages: <strong>'+pdfState.relevantPages.map(p=>'p.'+p).join(', ')+'</strong></div>':'';
+    viewer.classList.add('iframe-mode');
+    viewer.innerHTML=hint+'<iframe class="pdfm-iframe" src="https://docs.google.com/viewer?url='+enc+'&embedded=true" style="height:'+(pdfState.relevantPages.length?'564px':'600px')+'"></iframe>';
+    pdfState.totalPages=0;
+    document.getElementById('pageTotalTxt').textContent='—';
+    document.getElementById('btnPrev').disabled=true;
+    document.getElementById('btnNext').disabled=true;
+    document.getElementById('pageJump').disabled=true;
+  }
+}
+
+async function renderPage(num){
+  if(!pdfState.doc||pdfState.rendering) return;
+  pdfState.rendering=true; pdfState.currentPage=num;
+  const viewer=document.getElementById('pdfmViewer');
+  viewer.classList.remove('iframe-mode');
+  viewer.innerHTML='<div class="pdfm-loading"><div class="big-spinner"></div><span>Rendering page '+num+'…</span></div>';
+  try{
+    const page=await pdfState.doc.getPage(num);
+    const maxW=Math.min((viewer.clientWidth||800)-40,800);
+    const vp0=page.getViewport({scale:1});
+    const scale=(maxW/vp0.width)*pdfState.zoom;
+    const vp=page.getViewport({scale});
+    const canvas=document.createElement('canvas');
+    canvas.width=vp.width; canvas.height=vp.height;
+    canvas.style.cssText='display:block;max-width:100%;height:auto;';
+    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
+    const wrap=document.createElement('div');
+    wrap.className='pdfm-canvas-wrap'; wrap.appendChild(canvas);
+    const badge=document.createElement('div'); badge.className='page-num-badge';
+    const isRel=pdfState.relevantPages.includes(num);
+    badge.innerHTML='Page '+num+' of '+pdfState.totalPages+(isRel?' &nbsp;★ article':'');
+    badge.style.color=isRel?'var(--saffron)':'';
+    wrap.appendChild(badge);
+    viewer.innerHTML=''; viewer.appendChild(wrap); viewer.scrollTop=0;
+  }catch(err){viewer.innerHTML='<div class="pdfm-error"><div>⚠️</div><p>'+err.message+'</p></div>';}
+  document.getElementById('pageJump').value=num;
+  updateNavButtons(); updatePagePills(); pdfState.rendering=false;
+}
+
+function updateNavButtons(){
+  const ok=pdfState.doc&&pdfState.totalPages>0;
+  document.getElementById('btnPrev').disabled=!ok||pdfState.currentPage<=1;
+  document.getElementById('btnNext').disabled=!ok||pdfState.currentPage>=pdfState.totalPages;
+  document.getElementById('pageJump').disabled=!ok;
+}
+function updatePagePills(){
+  document.querySelectorAll('.pdfm-page-pill').forEach((p,i)=>p.classList.toggle('current',pdfState.relevantPages[i]===pdfState.currentPage));
+}
+function pdfGoPage(d){if(pdfState.doc){const n=pdfState.currentPage+d;if(n>=1&&n<=pdfState.totalPages)renderPage(n);}}
+function pdfGoToPage(pg){if(pdfState.doc){const n=parseInt(pg);if(n>=1&&n<=pdfState.totalPages)renderPage(n);}}
+function pdfJumpPage(v){pdfGoToPage(v);}
+function pdfZoom(d){
+  if(!pdfState.doc) return;
+  pdfState.zoom=Math.max(.4,Math.min(3,pdfState.zoom+d));
+  document.getElementById('zoomLabel').textContent=Math.round(pdfState.zoom*100)+'%';
+  renderPage(pdfState.currentPage);
+}
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('pdfOverlay').classList.contains('open')) return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') pdfGoPage(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') pdfGoPage(-1);
+  if(e.key==='Escape') closePDFModal();
+});
+
+/* ═══════════════════════════════════════════════════════
+   MARKDOWN → HTML
+═══════════════════════════════════════════════════════ */
+function mdToHtml(md){
+  if(!md) return '';
+  let h=md
+    .replace(/&(?![a-zA-Z#]\w{1,6};)/g,'&amp;')
+    .replace(/^#{4}\s+(.+)$/gm,'<h4>$1</h4>')
+    .replace(/^#{3}\s+(.+)$/gm,'<h3>$1</h3>')
+    .replace(/^#{2}\s+(.+)$/gm,'<h2>$1</h2>')
+    .replace(/^#\s+(.+)$/gm,'<h2>$1</h2>')
+    .replace(/^[-*_]{3,}$/gm,'<hr>')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/__(.+?)__/g,'<strong>$1</strong>')
+    .replace(/\*([^*\n]+?)\*/g,'<em>$1</em>')
+    .replace(/_([^_\n]+?)_/g,'<em>$1</em>')
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/^>\s*(.+)$/gm,'<blockquote>$1</blockquote>')
+    .replace(/^[\-\*\+]\s+(.+)$/gm,'<li-u>$1</li-u>')
+    .replace(/^\d+\.\s+(.+)$/gm,'<li-o>$1</li-o>');
+  h=h.replace(/(<li-u>.*?<\/li-u>(\n|$))+/gs,m=>'<ul>'+m.replace(/li-u/g,'li')+'</ul>');
+  h=h.replace(/(<li-o>.*?<\/li-o>(\n|$))+/gs,m=>'<ol>'+m.replace(/li-o/g,'li')+'</ol>');
+  const block=/^<(h[1-6]|ul|ol|blockquote|hr)/;
+  h=h.split(/\n{2,}/).map(chunk=>{
+    chunk=chunk.trim(); if(!chunk) return '';
+    if(block.test(chunk)) return chunk;
+    return '<p>'+chunk.replace(/\n(?!<)/g,' ')+'</p>';
+  }).join('\n');
+  return h;
+}
+
+/* ═══════════════════════════════════════════════════════
+   LEARN / CLAUDE API
+═══════════════════════════════════════════════════════ */
+const LEARN_SYS=`You are a scholarly guide to Indian civilisation whose every factual claim must be traceable to the Epigraphia Indica (EI, Vols. 1–36, ASI 1892–1965) or the Epigraphia Carnatica (EC, B.L. Rice, 1886–1912).
+
+STRICT SOURCE RULES:
+1. Every historical date, event, or claim must cite its EI or EC source inline, e.g. "(EI Vol. 6, p. 1, c. 945 CE)" or "(EC Vol. 2, 12th c.)".
+2. Do NOT state dates or facts that cannot be attributed to an EI or EC inscription record. If a fact is widely known but not in EI/EC, omit it or flag it as "not attested in EI/EC".
+3. Prefer exact regnal years or epigraphic dates where available (e.g. "Saka 867 = 945 CE, EI Vol. 6").
+4. If uncertain whether a specific claim is in EI/EC, say so clearly rather than assert it.
+
+Expertise: Advaita Vedanta, Vishishtadvaita, Dvaita/Madhva, Kashmir Shaivism, Shaiva Siddhanta, Lingayat, Pancharatra Agama, Vedic yajna, Jain Digambara, Buddhist donative records; dynasties with EI documentation: Satavahana, Gupta, Chalukya, Pallava, Rashtrakuta, Chola, Ganga, Hoysala, Kakatiya, Vijayanagara.
+
+Write with scholarly depth yet accessible prose. Use markdown: ## for main headings, ### for sub-headings, **bold** for Sanskrit terms, *italic* for titles. Every date/event must carry its EI/EC citation in parentheses.`;
+
+async function doLearnAsk(){
+  const q=document.getElementById('learnInput').value.trim();
+  if(!q) return;
+  await learnAsk(q);
+}
+
+async function learnAsk(question){
+  document.getElementById('learnInput').value=question;
+  const out=document.getElementById('learnOutput');
+  const apiKey=document.getElementById('apiKeyInput').value.trim();
+  if(!apiKey){
+    out.innerHTML='<span style="color:var(--terracotta)">Please enter your Claude API key above to use the Learn feature.</span>';
+    return;
+  }
+  out.innerHTML='<span class="spinner"></span> Illuminating from epigraphic sources…';
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,system:LEARN_SYS,messages:[{role:'user',content:question}]})
+    });
+    const data=await resp.json();
+    if(data.error) throw new Error(data.error.message);
+    out.innerHTML=mdToHtml((data.content||[]).map(c=>c.text||'').join('')||'No response.');
+  }catch(err){
+    out.innerHTML='<span style="color:var(--terracotta)">Error: '+err.message+'</span>';
+  }
+}
+
+function explainTradition(t){
+  const q={
+    advaita: "What do Epigraphia Indica and Epigraphia Carnatica inscriptions reveal about Advaita Vedanta — evidence for Adi Shankaracharya's four Amnaya Mathas, Vedantic debates, and the spread of non-dual philosophy?",
+    shaiva:  "Explain the Shaiva Agama tradition in Indian inscriptions — Pashupata origins, Shaiva Siddhanta in Tamil Nadu, Kashmir Shaivism, Lingayat movement in Karnataka, Nayanmars, and key inscriptional records.",
+    vaishnava:"Describe the Vaishnava tradition in Indian epigraphy — Pancharatra Agama, Alvar saints, Ramanuja's Vishishtadvaita, Madhva's Dvaita, and major Vaishnava inscriptions from Chola, Pallava and Vijayanagara.",
+    vedic:   "What is the epigraphic evidence for the Vedic yajna tradition? Describe Ashvamedha, Rajasuya, and Agnihotra records in stone, Brahmin agrahara grants, and royal patronage of Vedic learning.",
+    jain:    "Explain the Jain tradition in Epigraphia Carnatica — Ganga dynasty patronage, Gomateshvara at Shravanabelagola, Digambara monk traditions, and Jain temple records in Karnataka.",
+    buddhist:"Describe Buddhist epigraphy in India — from Ashokan edicts to stupa records at Amaravati, donative inscriptions at Sanchi and Nagarjunakonda, and the gradual decline of Buddhism.",
+  }[t]||'Tell me about the '+t+' tradition in Indian epigraphy';
+  switchTab('learn');
+  setTimeout(()=>learnAsk(q),100);
+}
+
+document.getElementById('learnInput').addEventListener('keydown',e=>{if(e.key==='Enter')doLearnAsk();});
+</script>
+</body>
+</html>
