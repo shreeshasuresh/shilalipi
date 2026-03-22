@@ -243,6 +243,7 @@ main{position:relative;z-index:5;}
 .learn-output hr{border:none;border-top:1px solid var(--border);margin:16px 0;}
 
 footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px solid var(--border-dark);text-align:center;padding:24px 20px;font-size:.73rem;color:var(--ink-light);font-style:italic;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-track{background:var(--bg-alt);}
 ::-webkit-scrollbar-thumb{background:var(--border-dark);border-radius:3px;}
@@ -273,7 +274,8 @@ footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px soli
         <button class="nav-btn" id="btnPrev" onclick="pdfGoPage(-1)" disabled>◀ Prev</button>
         <div class="page-counter">
           <span>Page</span>
-          <input class="page-jump" id="pageJump" type="number" min="1" value="1" onchange="pdfJumpPage(this.value)" onkeydown="if(event.key==='Enter')pdfJumpPage(this.value)">
+          <label for="pageJump" class="sr-only">Go to page</label>
+          <input class="page-jump" id="pageJump" type="number" min="1" value="1" aria-label="Go to page" onchange="pdfJumpPage(this.value)" onkeydown="if(event.key==='Enter')pdfJumpPage(this.value)">
           <span class="page-total">of <span id="pageTotalTxt">—</span></span>
         </div>
         <button class="nav-btn" id="btnNext" onclick="pdfGoPage(1)" disabled>Next ▶</button>
@@ -336,12 +338,15 @@ footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px soli
   </div>
 
   <div class="year-range" id="yearRange" style="display:none">
-    <input class="year-input" id="yearFrom" placeholder="From CE (e.g. 300)" type="number" />
-    <input class="year-input" id="yearTo"   placeholder="To CE (e.g. 1200)" type="number" />
+    <label for="yearFrom" class="sr-only">From year CE</label>
+    <input class="year-input" id="yearFrom" placeholder="From CE (e.g. 300)" type="number" aria-label="From year CE" />
+    <label for="yearTo" class="sr-only">To year CE</label>
+    <input class="year-input" id="yearTo"   placeholder="To CE (e.g. 1200)" type="number" aria-label="To year CE" />
   </div>
 
+  <label for="searchInput" class="sr-only">Search inscriptions</label>
   <div class="search-box-wrap">
-    <input class="search-input" id="searchInput" placeholder="Search 40,000+ pages of inscriptions… try 'Chalukya Shiva temple' or 'copper plate grant'" />
+    <input class="search-input" id="searchInput" aria-label="Search inscriptions" placeholder="Search 40,000+ pages of inscriptions… try 'Chalukya Shiva temple' or 'copper plate grant'" />
     <button class="search-btn" onclick="doSearch()">🔍</button>
   </div>
 
@@ -414,8 +419,8 @@ footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px soli
   <div class="ai-learn-box">
     <h3>🪔 Deep Dive — Ask About Any Tradition or Inscription</h3>
     <div class="api-key-row">
-      <label>CLAUDE API KEY</label>
-      <input class="api-key-input" id="apiKeyInput" type="password" placeholder="sk-ant-… (stored only in this browser tab, never sent anywhere else)" />
+      <label for="apiKeyInput" style="font-size:.72rem;color:var(--ink-light);white-space:nowrap;letter-spacing:.05em;">CLAUDE API KEY</label>
+      <input class="api-key-input" id="apiKeyInput" type="password" aria-label="Claude API key" placeholder="sk-ant-… (stored only in this browser tab, never sent anywhere else)" />
     </div>
     <p class="api-key-note">Get a free key at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>. Your key is used only for the Learn tab and stays in your browser.</p>
     <div class="learn-chips">
@@ -429,7 +434,8 @@ footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px soli
       <span class="learn-chip" onclick="learnAsk('Explain the significance of Sanskrit prashastis and how Gupta-era inscriptions document Indian civilisation')">Gupta Sanskrit Prashastis</span>
     </div>
     <div class="learn-prompt-row">
-      <input class="learn-input" id="learnInput" placeholder="Ask anything — tradition, ruler, inscription, philosophy, dynasty…" />
+      <label for="learnInput" class="sr-only">Ask about Indian history and inscriptions</label>
+      <input class="learn-input" id="learnInput" aria-label="Ask about Indian history and inscriptions" placeholder="Ask anything — tradition, ruler, inscription, philosophy, dynasty…" />
       <button class="learn-go" onclick="doLearnAsk()">Illuminate ✦</button>
     </div>
     <div class="learn-output" id="learnOutput">
