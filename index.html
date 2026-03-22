@@ -371,7 +371,7 @@ footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px soli
   <div class="results-area" id="resultsArea">
     <div class="empty-state">
       <div class="ei">🏛️</div>
-      <span id="emptyMsg">Waiting for search index to load…</span>
+      <div>Waiting for search index to load…</div>
     </div>
   </div>
   <div id="pagination" class="pagination"></div>
@@ -522,9 +522,8 @@ function onIndexLoadError(){
     '<span class="index-warn">⚠️ search_index.js not found. '+
     'Run <code>python preprocess.py</code> first, then copy <code>search_index.js</code> here. '+
     'The <em>Learn</em> tab still works.</span>';
-  document.getElementById('emptyMsg').innerHTML=
-    '⚠️ No index loaded. Run <strong>preprocess.py</strong> to build the search index, '+
-    'then put <strong>search_index.js</strong> in the same folder as index.html.';
+  EMPTY_MSG='⚠️ No index loaded. Run preprocess.py to build the search index, then put search_index.js in the same folder as index.html.';
+  showEmptyState('⚠️', EMPTY_MSG);
 }
 
 function initSearch(){
@@ -553,8 +552,8 @@ function initSearch(){
     '<strong>'+articles.toLocaleString()+' inscription articles</strong> from '+
     '<strong>'+vols+' volumes</strong> · fully local, instant search'+
     (meta.sample_mode?' <em>(sample mode — run without --sample for full index)</em>':'');
-  document.getElementById('emptyMsg').textContent=
-    'Type a search above or click a quick tag to explore the corpus.';
+  EMPTY_MSG='Type a search above or click a quick tag to explore the corpus.';
+  showEmptyState('🏛️', EMPTY_MSG);
 }
 
 // Try to init after page load (index script may load asynchronously)
@@ -676,16 +675,27 @@ function doSearch(){
 
 function extractYear(eraStr){
   if(!eraStr) return null;
-  const m=eraStr.match(/\b(\d{3,4})\b/);
+  const m=String(eraStr).match(/\b(\d{3,4})\b/);
   return m?parseInt(m[1]):null;
+}
+
+// Store empty message in a variable so it survives innerHTML replacement
+let EMPTY_MSG = 'Type a search above or click a quick tag to explore the corpus.';
+
+function showEmptyState(icon, msg){
+  const area=document.getElementById('resultsArea');
+  area.innerHTML='';
+  const d=document.createElement('div'); d.className='empty-state';
+  const ei=document.createElement('div'); ei.className='ei'; ei.textContent=icon;
+  const t=document.createElement('div'); t.innerHTML=msg;
+  d.appendChild(ei); d.appendChild(t);
+  area.appendChild(d);
+  document.getElementById('pagination').innerHTML='';
 }
 
 function clearResults(){
   lastResults=[];
-  document.getElementById('resultsArea').innerHTML=
-    '<div class="empty-state"><div class="ei">🏛️</div>'+
-    document.getElementById('emptyMsg').textContent+'</div>';
-  document.getElementById('pagination').innerHTML='';
+  showEmptyState('🏛️', EMPTY_MSG);
   document.getElementById('resultsCount').textContent='';
 }
 
@@ -695,19 +705,29 @@ function renderPage(pg){
   const pgDiv=document.getElementById('pagination');
 
   if(!lastResults.length){
-    area.innerHTML='<div class="empty-state"><div class="ei">🔍</div>No inscriptions matched "<em>'+escHtml(lastQuery)+'</em>".<br>Try broader terms or a different filter.</div>';
-    pgDiv.innerHTML=''; return;
+    showEmptyState('🔍','No inscriptions matched <em>'+escHtml(lastQuery)+'</em>. Try broader terms or a different filter.');
+    return;
   }
 
   const total=lastResults.length;
   const totalPages=Math.ceil(total/PAGE_SIZE);
   const slice=lastResults.slice((pg-1)*PAGE_SIZE, pg*PAGE_SIZE);
 
-  area.innerHTML=
-    '<div class="results-hdr">Showing '+(((pg-1)*PAGE_SIZE)+1)+'–'+
-    Math.min(pg*PAGE_SIZE,total)+' of '+total.toLocaleString()+
-    ' results for "'+escHtml(lastQuery)+'"</div>'+
-    slice.map(r=>buildCard(r)).join('');
+  // Clear and rebuild using DOM — avoids all innerHTML string-escaping risks
+  area.innerHTML='';
+
+  // Header
+  const hdr=document.createElement('div');
+  hdr.className='results-hdr';
+  hdr.textContent='Showing '+((pg-1)*PAGE_SIZE+1)+'–'+Math.min(pg*PAGE_SIZE,total)+
+    ' of '+total.toLocaleString()+' results for "'+lastQuery+'"';
+  area.appendChild(hdr);
+
+  // Cards
+  slice.forEach(r=>{
+    try { area.appendChild(buildCard(r)); }
+    catch(e){ console.warn('Card render error:', e, r); }
+  });
 
   // Pagination
   pgDiv.innerHTML='';
@@ -716,68 +736,110 @@ function renderPage(pg){
       const b=document.createElement('button');
       b.className='pg-btn'+(active?' active':'');
       b.textContent=label; b.disabled=disabled;
-      b.onclick=()=>{ renderPage(target); window.scrollTo({top:0,behavior:'smooth'}); };
+      if(!disabled) b.addEventListener('click',()=>{ renderPage(target); window.scrollTo({top:0,behavior:'smooth'}); });
       pgDiv.appendChild(b);
     };
     addBtn('◀',pg-1,pg===1,false);
-    // Show up to 7 page buttons
     let start=Math.max(1,pg-3), end=Math.min(totalPages,start+6);
     start=Math.max(1,end-6);
-    if(start>1){ addBtn('1',1,false,false); if(start>2){const e=document.createElement('span');e.textContent='…';e.style.cssText='padding:0 6px;color:var(--ink-light)';pgDiv.appendChild(e);}}
+    if(start>1){
+      addBtn('1',1,false,false);
+      if(start>2){const e=document.createElement('span');e.textContent='…';e.style.cssText='padding:0 6px;color:var(--ink-light)';pgDiv.appendChild(e);}
+    }
     for(let i=start;i<=end;i++) addBtn(i,i,false,i===pg);
-    if(end<totalPages){const e=document.createElement('span');e.textContent='…';e.style.cssText='padding:0 6px;color:var(--ink-light)';pgDiv.appendChild(e); addBtn(totalPages,totalPages,false,false);}
+    if(end<totalPages){
+      const e=document.createElement('span');e.textContent='…';e.style.cssText='padding:0 6px;color:var(--ink-light)';pgDiv.appendChild(e);
+      addBtn(totalPages,totalPages,false,false);
+    }
     addBtn('▶',pg+1,pg===totalPages,false);
   }
 }
 
+// Returns a DOM element — no innerHTML string building, no escaping issues
 function buildCard(r){
-  // Highlight matched terms in title and snippet
   const terms=(lastQuery||'').toLowerCase().split(/\s+/).filter(t=>t.length>2);
-  const highlight=(str)=>{
-    if(!str||!terms.length) return escHtml(str||'');
-    let out=escHtml(str);
-    terms.forEach(t=>{
-      const re=new RegExp('('+t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')', 'gi');
-      out=out.replace(re,'<mark>$1</mark>');
+
+  // Highlight helper — returns a span with safe text + mark nodes
+  function highlightEl(str){
+    const span=document.createElement('span');
+    if(!str||!terms.length){ span.textContent=str||''; return span; }
+    // Split text around matched terms
+    const re=new RegExp('('+terms.map(t=>t.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')', 'gi');
+    const parts=String(str).split(re);
+    parts.forEach(part=>{
+      if(re.test(part)){
+        re.lastIndex=0;
+        const mark=document.createElement('mark'); mark.textContent=part; span.appendChild(mark);
+      } else {
+        span.appendChild(document.createTextNode(part));
+      }
     });
-    return out;
-  };
+    return span;
+  }
 
   const pages=[];
   if(r.page){
-    const s=r.page, e=r.pageEnd||r.page;
+    const s=parseInt(r.page)||1, e=parseInt(r.pageEnd)||s;
     for(let p=s;p<=Math.min(e,s+5);p++) pages.push(p);
   }
-  const pagesLabel=pages.length?pages.map(p=>'p.'+p).join(', '):'';
-  const dlUrl=r.url||'#';
+  const dlUrl=String(r.url||'');
 
-  const viewBtn=(dlUrl&&dlUrl!=='#')
-    ?`<button class="btn-view-pdf" onclick='openPDFModal(${JSON.stringify(r.title||'')},${JSON.stringify(r.volume||'')},${JSON.stringify(dlUrl)},${JSON.stringify(pages)},${pages[0]||1})'>
-        <svg width="14" height="14" viewBox="0 0 20 20" fill="white"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-        Read in Portal
-      </button>`
-    :'';
-  const dlBtn=(dlUrl&&dlUrl!=='#')
-    ?`<a class="btn-dl" href="${dlUrl}" target="_blank">⬇ Download PDF</a>`:'';
+  // Card container
+  const card=document.createElement('div'); card.className='result-card';
 
-  return `<div class="result-card">
-    <div class="result-meta">
-      ${r.era     ?`<span class="mtag m-era">⏳ ${escHtml(r.era)}</span>`:''}
-      ${r.place   ?`<span class="mtag m-place">📍 ${escHtml(r.place)}</span>`:''}
-      ${r.volume  ?`<span class="mtag m-vol">📖 ${escHtml(r.volume)}</span>`:''}
-      ${r.dynasty ?`<span class="mtag m-dyn">⚜ ${escHtml(r.dynasty)}</span>`:''}
-      ${r.script  ?`<span class="mtag m-scr">Ā ${escHtml(r.script)}</span>`:''}
-      ${pagesLabel?`<span class="mtag m-page">🔖 pp. ${pagesLabel}</span>`:''}
-    </div>
-    <div class="result-title">${highlight(r.title)||'Untitled Inscription'}</div>
-    ${r.religion?`<div class="result-relig">✦ ${escHtml(r.religion)}</div>`:''}
-    <div class="result-snippet">${highlight(r.snippet)}</div>
-    <div class="result-actions">
-      <div class="result-src-label">${escHtml(r.volume||'Epigraphia Indica')} — Archaeological Survey of India</div>
-      ${viewBtn}
-      ${dlBtn}
-    </div>
-  </div>`;
+  // Meta tags
+  const meta=document.createElement('div'); meta.className='result-meta';
+  const addTag=(cls,icon,val)=>{
+    if(!val) return;
+    const s=document.createElement('span'); s.className='mtag '+cls;
+    s.textContent=icon+' '+val; meta.appendChild(s);
+  };
+  addTag('m-era','⏳',r.era||'');
+  addTag('m-place','📍',r.place||'');
+  addTag('m-vol','📖',r.volume||'');
+  addTag('m-dyn','⚜',r.dynasty||'');
+  addTag('m-scr','Ā',r.script||'');
+  if(pages.length){const s=document.createElement('span');s.className='mtag m-page';s.textContent='🔖 pp. '+pages.map(p=>'p.'+p).join(', ');meta.appendChild(s);}
+  card.appendChild(meta);
+
+  // Title
+  const titleEl=document.createElement('div'); titleEl.className='result-title';
+  titleEl.appendChild(highlightEl(r.title||'Untitled Inscription'));
+  card.appendChild(titleEl);
+
+  // Religion
+  if(r.religion){ const rel=document.createElement('div'); rel.className='result-relig'; rel.textContent='✦ '+r.religion; card.appendChild(rel); }
+
+  // Snippet
+  const snip=document.createElement('div'); snip.className='result-snippet';
+  snip.appendChild(highlightEl(r.snippet||''));
+  card.appendChild(snip);
+
+  // Actions row
+  const actions=document.createElement('div'); actions.className='result-actions';
+  const srcLabel=document.createElement('div'); srcLabel.className='result-src-label';
+  srcLabel.textContent=(r.volume||'Epigraphia Indica')+' — Archaeological Survey of India';
+  actions.appendChild(srcLabel);
+
+  if(dlUrl&&dlUrl!=='#'){
+    // "Read in Portal" button — onclick set via addEventListener, no HTML attribute
+    const viewBtn=document.createElement('button'); viewBtn.className='btn-view-pdf';
+    viewBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 20 20" fill="white"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"/></svg> Read in Portal';
+    // Capture values in closure — avoids any attribute escaping issues entirely
+    const capturedTitle=String(r.title||'');
+    const capturedVol=String(r.volume||'');
+    const capturedPages=pages.slice();
+    const capturedStart=capturedPages[0]||1;
+    viewBtn.addEventListener('click',()=>openPDFModal(capturedTitle,capturedVol,dlUrl,capturedPages,capturedStart));
+    actions.appendChild(viewBtn);
+
+    const dlBtn=document.createElement('a'); dlBtn.className='btn-dl';
+    dlBtn.href=dlUrl; dlBtn.target='_blank'; dlBtn.textContent='⬇ Download PDF';
+    actions.appendChild(dlBtn);
+  }
+
+  card.appendChild(actions);
+  return card;
 }
 
 function escHtml(s){
