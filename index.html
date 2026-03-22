@@ -6,10 +6,21 @@
 <title>Śilālipi — India's Epigraphic Heritage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
-<!-- MiniSearch — 7KB, zero-dependency, full-text search in the browser -->
-<script src="https://cdn.jsdelivr.net/npm/minisearch@6.3.0/dist/umd/index.min.js"></script>
-<!-- PDF.js for inline viewer -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- TinySearch — BM25 full-text search, fully inlined, zero CDN dependencies -->
+<script>
+/* ─── TinySearch v1.0 ─── */
+(function(g){"use strict";
+function editDist(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;const r=Array.from({length:n+1},(_,i)=>i);for(let i=1;i<=m;i++){let p=i;for(let j=1;j<=n;j++){const v=a[i-1]===b[j-1]?r[j-1]:1+Math.min(r[j-1],r[j],p);r[j-1]=p;p=v;}r[n]=p;}return r[n];}
+function tok(s){return String(s||'').toLowerCase().match(/[a-z0-9\u0900-\u097f\u0c80-\u0cff\u0b80-\u0bff]+/g)||[];}
+function stem(w){return w.replace(/izations?$/,'ize').replace(/ations?$/,'ate').replace(/nesses$/,'').replace(/ments?$/,'').replace(/ings?$/,'').replace(/ers?$/,'').replace(/ly$/,'').replace(/ies$/,'y').replace(/s$/,'');}
+function TS(o){this.F=o.fields||[];this.S=o.storeFields||[];this.I=Object.create(null);this.D=Object.create(null);this.N=0;this.FL=Object.create(null);this.AL=Object.create(null);this.FC=Object.create(null);this.F.forEach(f=>{this.FC[f]=0;this.AL[f]=0;});}
+TS.prototype.add=function(doc){const id=doc.id;this.N++;const st=Object.create(null);this.S.forEach(f=>{st[f]=doc[f];});this.D[id]=st;this.FL[id]=Object.create(null);this.F.forEach(f=>{const ts=tok(doc[f]);this.FL[id][f]=ts.length;this.FC[f]=(this.FC[f]||0)+ts.length;const tf=Object.create(null);ts.forEach(t=>{const s=stem(t);tf[s]=(tf[s]||0)+1;});Object.entries(tf).forEach(([t,c])=>{if(!this.I[t])this.I[t]=Object.create(null);if(!this.I[t][id])this.I[t][id]=Object.create(null);this.I[t][id][f]=c;});});};
+TS.prototype.addAll=function(docs){docs.forEach(d=>this.add(d));this.F.forEach(f=>{this.AL[f]=this.N>0?this.FC[f]/this.N:1;});};
+TS.prototype.search=function(qs,o){o=o||{};const boost=o.boost||{},fuzzy=o.fuzzy||0,prefix=o.prefix!==false;const qt=tok(qs).map(stem).filter(t=>t.length>1);if(!qt.length)return[];const sc=Object.create(null),mt=Object.create(null);qt.forEach(q=>{const cands=[],seen=new Set();Object.keys(this.I).forEach(it=>{if(seen.has(it))return;const ex=it===q,pfx=prefix&&it.startsWith(q)&&q.length>=2,d=(!ex&&!pfx&&fuzzy>0)?editDist(q,it):ex?0:99,mx=Math.floor(Math.max(q.length,it.length)*fuzzy);if(ex||pfx||(fuzzy>0&&d<=mx&&d<=2)){cands.push([it,ex?1:pfx?Math.max(0.4,q.length/it.length):Math.max(0.1,1-d*0.35)]);seen.add(it);}});cands.forEach(([it,tw])=>{const ps=this.I[it];if(!ps)return;const df=Object.keys(ps).length,N=this.N,idf=Math.log((N-df+0.5)/(df+0.5)+1);Object.entries(ps).forEach(([id,fs])=>{if(!mt[id])mt[id]=new Set();mt[id].add(q);this.F.forEach(f=>{if(!(f in fs))return;const fb=boost[f]||1,tf=fs[f],dl=(this.FL[id]||{})[f]||1,avg=this.AL[f]||1,k=1.5,b=0.75;const bm=idf*(tf*(k+1))/(tf+k*(1-b+b*(dl/avg)));sc[id]=(sc[id]||0)+bm*fb*tw;});});});});const mm=qt.length<=2?1:Math.ceil(qt.length*0.6);return Object.entries(sc).filter(([id])=>!mt[id]||mt[id].size>=mm).sort((a,b)=>b[1]-a[1]).slice(0,200).map(([id,score])=>Object.assign({},this.D[id]||{},{id,score}));};
+g.TinySearch=TS;
+})(typeof window!=='undefined'?window:global);
+</script>
+<!-- PDF viewer uses native browser iframe — no external library needed -->
 
 <style>
 /* ══════════════════════════════════════════
@@ -151,28 +162,9 @@ main{position:relative;z-index:5;}
 .pdfm-pages-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-light);white-space:nowrap;}
 .pdfm-page-pill{padding:3px 10px;border-radius:14px;background:var(--saffron);color:white;font-size:.75rem;cursor:pointer;transition:all .18s;}
 .pdfm-page-pill:hover,.pdfm-page-pill.current{background:var(--ochre);outline:2px solid var(--gold);}
-.pdfm-viewer{flex:1;min-height:560px;position:relative;background:#f0e8d8;display:flex;flex-direction:column;align-items:center;overflow:auto;padding:20px;gap:16px;}
-.pdfm-viewer.iframe-mode{padding:0;}
-.pdfm-canvas-wrap{position:relative;box-shadow:0 4px 24px rgba(30,18,8,.3);background:white;display:inline-block;max-width:100%;}
-.pdfm-canvas-wrap canvas{display:block;max-width:100%;height:auto;}
-.page-num-badge{position:absolute;bottom:-28px;left:50%;transform:translateX(-50%);font-size:.72rem;color:var(--ink-light);white-space:nowrap;background:var(--bg-alt);padding:2px 10px;border-radius:10px;border:1px solid var(--border);}
-.pdfm-iframe{width:100%;height:600px;border:none;}
-.pdfm-loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:300px;gap:16px;color:var(--ink-light);font-style:italic;font-size:.9rem;}
-.pdfm-loading .big-spinner{width:40px;height:40px;border:3px solid rgba(180,100,26,.15);border-top-color:var(--saffron);border-radius:50%;animation:spin 1s linear infinite;}
-.pdfm-error{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;gap:12px;color:var(--ink-mid);font-size:.88rem;text-align:center;padding:20px;}
+.pdfm-iframe{width:100%;height:600px;border:none;display:block;background:#f0e8d8;}
 .pdfm-footer{display:flex;align-items:center;gap:10px;padding:12px 20px;border-top:1px solid var(--border);background:var(--bg-alt);border-radius:0 0 6px 6px;flex-wrap:wrap;}
-.pdfm-nav{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;}
-.nav-btn{background:var(--bg-card);border:1px solid var(--border-dark);border-radius:3px;padding:6px 14px;cursor:pointer;color:var(--ink-mid);font-size:.85rem;transition:all .18s;white-space:nowrap;font-family:'Noto Serif',serif;}
-.nav-btn:hover:not(:disabled){background:var(--ochre);border-color:var(--ochre);color:white;}
-.nav-btn:disabled{opacity:.4;cursor:not-allowed;}
-.page-counter{display:flex;align-items:center;gap:6px;font-size:.83rem;color:var(--ink-mid);}
-.page-jump{width:54px;padding:4px 6px;text-align:center;background:var(--bg-card);border:1px solid var(--border-dark);border-radius:3px;color:var(--ink);font-family:'Noto Serif',serif;font-size:.83rem;outline:none;}
-.page-jump:focus{border-color:var(--ochre);}
-.page-total{color:var(--ink-light);}
-.zoom-row{display:flex;align-items:center;gap:6px;}
-.zoom-btn{background:var(--bg-card);border:1px solid var(--border-dark);border-radius:3px;padding:5px 10px;cursor:pointer;color:var(--ink-mid);font-size:.8rem;transition:all .18s;}
-.zoom-btn:hover{border-color:var(--ochre);color:var(--ochre);}
-.pdfm-actions{display:flex;gap:8px;align-items:center;}
+.pdfm-actions{display:flex;gap:8px;align-items:center;margin-left:auto;}
 .btn-dl-modal,.btn-newtab{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;background:transparent;border:1px solid var(--border-dark);border-radius:3px;color:var(--ink-mid);font-size:.8rem;text-decoration:none;transition:all .18s;white-space:nowrap;}
 .btn-dl-modal:hover{border-color:var(--ochre);color:var(--ochre);}
 .btn-newtab:hover{border-color:var(--indigo);color:var(--indigo);}
@@ -260,33 +252,20 @@ footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px soli
         <div class="pdfm-title" id="pdfmTitle">Loading…</div>
         <div class="pdfm-vol" id="pdfmVol"></div>
       </div>
-      <button class="pdfm-close" onclick="closePDFModal()">✕</button>
+      <button class="pdfm-close" onclick="closePDFModal()" aria-label="Close PDF viewer">✕</button>
     </div>
+    <!-- Relevant page pills -->
     <div class="pdfm-pages-strip" id="pdfmStrip" style="display:none">
-      <span class="pdfm-pages-label">Article pages:</span>
+      <span class="pdfm-pages-label">Article pages — click to jump:</span>
       <div id="pdfmPills" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
     </div>
-    <div class="pdfm-viewer" id="pdfmViewer">
-      <div class="pdfm-loading"><div class="big-spinner"></div><span>Loading document…</span></div>
-    </div>
+    <!-- Native browser iframe — no CORS, no third-party viewer -->
+    <iframe id="pdfIframe" class="pdfm-iframe" title="PDF viewer" style="width:100%;height:600px;border:none;display:block;background:#f0e8d8;"></iframe>
+    <!-- Footer -->
     <div class="pdfm-footer">
-      <div class="pdfm-nav">
-        <button class="nav-btn" id="btnPrev" onclick="pdfGoPage(-1)" disabled>◀ Prev</button>
-        <div class="page-counter">
-          <span>Page</span>
-          <label for="pageJump" class="sr-only">Go to page</label>
-          <input class="page-jump" id="pageJump" type="number" min="1" value="1" aria-label="Go to page" onchange="pdfJumpPage(this.value)" onkeydown="if(event.key==='Enter')pdfJumpPage(this.value)">
-          <span class="page-total">of <span id="pageTotalTxt">—</span></span>
-        </div>
-        <button class="nav-btn" id="btnNext" onclick="pdfGoPage(1)" disabled>Next ▶</button>
-        <div class="zoom-row">
-          <button class="zoom-btn" onclick="pdfZoom(-0.2)">－</button>
-          <span id="zoomLabel" style="font-size:.75rem;color:var(--ink-light);min-width:36px;text-align:center;">100%</span>
-          <button class="zoom-btn" onclick="pdfZoom(0.2)">＋</button>
-        </div>
-      </div>
+      <span style="font-size:.78rem;color:var(--ink-light);flex:1;font-style:italic;">Use your browser's built-in PDF toolbar to navigate pages and zoom</span>
       <div class="pdfm-actions">
-        <a class="btn-newtab" id="btnNewTab" href="#" target="_blank">↗ Open Tab</a>
+        <a class="btn-newtab" id="btnNewTab" href="#" target="_blank" rel="noopener">↗ Open in New Tab</a>
         <a class="btn-dl-modal" id="btnDl" href="#" download>⬇ Download PDF</a>
       </div>
     </div>
@@ -447,7 +426,7 @@ footer{position:relative;z-index:5;background:var(--bg-deep);border-top:1px soli
 </main>
 
 <footer>
-  Search powered by <strong>MiniSearch</strong> — fully local, no server · Learn tab uses Claude API (your key) · Sources: Epigraphia Indica Vols. 1–36 (ASI, 1892–1965) · Epigraphia Carnatica (B.L. Rice, 1886–1912)
+  Search powered by <strong>TinySearch</strong> — fully local, no server · Learn tab uses Claude API (your key) · Sources: Epigraphia Indica Vols. 1–36 (ASI, 1892–1965) · Epigraphia Carnatica (B.L. Rice, 1886–1912)
 </footer>
 
 <!-- search_index.js is loaded programmatically at the bottom of the inline script -->
@@ -535,9 +514,9 @@ function initSearch(){
     console.warn('SILALIPI_INDEX not set — index may still be loading');
     return;
   }
-  // Guard: MiniSearch must be loaded from CDN
-  if(typeof MiniSearch==='undefined'){
-    console.error('MiniSearch not loaded — CDN may be blocked');
+  // Guard: TinySearch must be loaded from CDN
+  if(typeof TinySearch==='undefined'){
+    console.error('TinySearch not loaded — CDN may be blocked');
     document.getElementById('indexStatus').innerHTML=
       '<span class="index-warn">⚠️ Search library failed to load. Check your internet connection and refresh.</span>';
     return;
@@ -545,9 +524,9 @@ function initSearch(){
 
   try {
     allDocs=window.SILALIPI_INDEX;
-    console.log('Building MiniSearch index over',allDocs.length,'documents…');
+    console.log('Building TinySearch index over',allDocs.length,'documents…');
 
-    miniSearch=new MiniSearch({
+    miniSearch=new TinySearch({
       fields:['title','snippet','text','era','place','dynasty','religion','script','volume'],
       storeFields:['id','title','volume','volId','page','pageEnd','era','place','dynasty','religion','script','snippet','url'],
     });
@@ -879,115 +858,68 @@ document.getElementById('yearFrom')?.addEventListener('change',()=>{if(lastQuery
 document.getElementById('yearTo')?.addEventListener('change',()=>{if(lastQuery)doSearch();});
 
 /* ═══════════════════════════════════════════════════════
-   PDF VIEWER
+   PDF VIEWER — native browser iframe
+   Uses URL#page=N fragment: works in Chrome, Firefox, Edge, Safari
+   No CORS issues — browser loads the PDF directly
 ═══════════════════════════════════════════════════════ */
-pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-let pdfState={doc:null,currentPage:1,totalPages:0,zoom:1.0,url:'',relevantPages:[],rendering:false};
+let currentPDFUrl='';
+let currentPDFPages=[];
 
-async function openPDFModal(title,volLabel,url,pages,startPage){
-  Object.assign(pdfState,{url,relevantPages:pages||[],currentPage:startPage||(pages&&pages[0])||1,doc:null,zoom:1.0,rendering:false});
-  document.getElementById('pdfmTitle').textContent=title;
-  document.getElementById('pdfmVol').textContent=volLabel||'';
-  document.getElementById('btnNewTab').href=url;
-  document.getElementById('btnDl').href=url;
-  document.getElementById('zoomLabel').textContent='100%';
-  const strip=document.getElementById('pdfmStrip');
-  const pills=document.getElementById('pdfmPills');
+function openPDFModal(title, volLabel, url, pages, startPage){
+  currentPDFUrl  = url;
+  currentPDFPages= pages||[];
+  const pg = startPage || (pages&&pages[0]) || 1;
+
+  document.getElementById('pdfmTitle').textContent = title||'Inscription';
+  document.getElementById('pdfmVol').textContent   = volLabel||'';
+  document.getElementById('btnNewTab').href = url+'#page='+pg;
+  document.getElementById('btnDl').href    = url;
+
+  // Build page pills
+  const strip = document.getElementById('pdfmStrip');
+  const pills = document.getElementById('pdfmPills');
   pills.innerHTML='';
-  if(pages&&pages.length){
+  if(currentPDFPages.length){
     strip.style.display='flex';
-    pages.forEach(pg=>{const p=document.createElement('span');p.className='pdfm-page-pill';p.textContent='p.'+pg;p.onclick=()=>pdfGoToPage(pg);pills.appendChild(p);});
-  } else strip.style.display='none';
+    currentPDFPages.forEach(p=>{
+      const btn=document.createElement('button');
+      btn.className='pdfm-page-pill';
+      btn.textContent='p.'+p;
+      btn.addEventListener('click',()=>jumpPDFToPage(p));
+      pills.appendChild(btn);
+    });
+  } else {
+    strip.style.display='none';
+  }
+
+  // Load PDF directly in iframe at the right page
+  // #page=N is the standard PDF open parameter — supported by all modern browsers
+  document.getElementById('pdfIframe').src = url+'#page='+pg+'&toolbar=1&navpanes=1';
+
   document.getElementById('pdfOverlay').classList.add('open');
   document.body.style.overflow='hidden';
-  renderPDFView();
+}
+
+function jumpPDFToPage(pg){
+  // Re-set the iframe src with the new page fragment
+  document.getElementById('pdfIframe').src = currentPDFUrl+'#page='+pg+'&toolbar=1&navpanes=1';
+  document.getElementById('btnNewTab').href = currentPDFUrl+'#page='+pg;
+  // Highlight the active pill
+  document.querySelectorAll('.pdfm-page-pill').forEach((p,i)=>{
+    p.classList.toggle('current', currentPDFPages[i]===pg);
+  });
 }
 
 function closePDFModal(e){
   if(e&&e.target!==document.getElementById('pdfOverlay')) return;
   document.getElementById('pdfOverlay').classList.remove('open');
   document.body.style.overflow='';
-  if(pdfState.doc){pdfState.doc.destroy();pdfState.doc=null;}
+  // Clear iframe src to stop any ongoing download
+  document.getElementById('pdfIframe').src='';
 }
 
-async function renderPDFView(){
-  const viewer=document.getElementById('pdfmViewer');
-  viewer.classList.remove('iframe-mode');
-  viewer.innerHTML='<div class="pdfm-loading"><div class="big-spinner"></div><span>Loading document…</span></div>';
-  updateNavButtons();
-  try{
-    const task=pdfjsLib.getDocument({url:pdfState.url,withCredentials:false});
-    const doc=await Promise.race([task.promise,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),8000))]);
-    pdfState.doc=doc; pdfState.totalPages=doc.numPages;
-    document.getElementById('pageTotalTxt').textContent=doc.numPages;
-    document.getElementById('pageJump').max=doc.numPages;
-    await renderPage(pdfState.currentPage);
-    updateNavButtons(); updatePagePills();
-  }catch(err){
-    // Fall back to Google Docs viewer
-    const enc=encodeURIComponent(pdfState.url);
-    const hint=pdfState.relevantPages.length?'<div style="background:#fffbf2;padding:10px 16px;font-size:.8rem;color:var(--ochre);text-align:center;border-bottom:1px solid var(--border)">📌 Article pages: <strong>'+pdfState.relevantPages.map(p=>'p.'+p).join(', ')+'</strong></div>':'';
-    viewer.classList.add('iframe-mode');
-    viewer.innerHTML=hint+'<iframe class="pdfm-iframe" src="https://docs.google.com/viewer?url='+enc+'&embedded=true" style="height:'+(pdfState.relevantPages.length?'564px':'600px')+'"></iframe>';
-    pdfState.totalPages=0;
-    document.getElementById('pageTotalTxt').textContent='—';
-    document.getElementById('btnPrev').disabled=true;
-    document.getElementById('btnNext').disabled=true;
-    document.getElementById('pageJump').disabled=true;
-  }
-}
-
-async function renderPage(num){
-  if(!pdfState.doc||pdfState.rendering) return;
-  pdfState.rendering=true; pdfState.currentPage=num;
-  const viewer=document.getElementById('pdfmViewer');
-  viewer.classList.remove('iframe-mode');
-  viewer.innerHTML='<div class="pdfm-loading"><div class="big-spinner"></div><span>Rendering page '+num+'…</span></div>';
-  try{
-    const page=await pdfState.doc.getPage(num);
-    const maxW=Math.min((viewer.clientWidth||800)-40,800);
-    const vp0=page.getViewport({scale:1});
-    const scale=(maxW/vp0.width)*pdfState.zoom;
-    const vp=page.getViewport({scale});
-    const canvas=document.createElement('canvas');
-    canvas.width=vp.width; canvas.height=vp.height;
-    canvas.style.cssText='display:block;max-width:100%;height:auto;';
-    await page.render({canvasContext:canvas.getContext('2d'),viewport:vp}).promise;
-    const wrap=document.createElement('div');
-    wrap.className='pdfm-canvas-wrap'; wrap.appendChild(canvas);
-    const badge=document.createElement('div'); badge.className='page-num-badge';
-    const isRel=pdfState.relevantPages.includes(num);
-    badge.innerHTML='Page '+num+' of '+pdfState.totalPages+(isRel?' &nbsp;★ article':'');
-    badge.style.color=isRel?'var(--saffron)':'';
-    wrap.appendChild(badge);
-    viewer.innerHTML=''; viewer.appendChild(wrap); viewer.scrollTop=0;
-  }catch(err){viewer.innerHTML='<div class="pdfm-error"><div>⚠️</div><p>'+err.message+'</p></div>';}
-  document.getElementById('pageJump').value=num;
-  updateNavButtons(); updatePagePills(); pdfState.rendering=false;
-}
-
-function updateNavButtons(){
-  const ok=pdfState.doc&&pdfState.totalPages>0;
-  document.getElementById('btnPrev').disabled=!ok||pdfState.currentPage<=1;
-  document.getElementById('btnNext').disabled=!ok||pdfState.currentPage>=pdfState.totalPages;
-  document.getElementById('pageJump').disabled=!ok;
-}
-function updatePagePills(){
-  document.querySelectorAll('.pdfm-page-pill').forEach((p,i)=>p.classList.toggle('current',pdfState.relevantPages[i]===pdfState.currentPage));
-}
-function pdfGoPage(d){if(pdfState.doc){const n=pdfState.currentPage+d;if(n>=1&&n<=pdfState.totalPages)renderPage(n);}}
-function pdfGoToPage(pg){if(pdfState.doc){const n=parseInt(pg);if(n>=1&&n<=pdfState.totalPages)renderPage(n);}}
-function pdfJumpPage(v){pdfGoToPage(v);}
-function pdfZoom(d){
-  if(!pdfState.doc) return;
-  pdfState.zoom=Math.max(.4,Math.min(3,pdfState.zoom+d));
-  document.getElementById('zoomLabel').textContent=Math.round(pdfState.zoom*100)+'%';
-  renderPage(pdfState.currentPage);
-}
 document.addEventListener('keydown',e=>{
   if(!document.getElementById('pdfOverlay').classList.contains('open')) return;
-  if(e.key==='ArrowRight'||e.key==='ArrowDown') pdfGoPage(1);
-  if(e.key==='ArrowLeft'||e.key==='ArrowUp') pdfGoPage(-1);
   if(e.key==='Escape') closePDFModal();
 });
 
@@ -1087,16 +1019,16 @@ document.getElementById('learnInput').addEventListener('keydown',e=>{if(e.key===
   const s=document.createElement('script');
   s.src='search_index.js';
   s.onload=()=>{
-    // MiniSearch CDN may still be loading — poll until ready, max 5s
+    // TinySearch CDN may still be loading — poll until ready, max 5s
     let attempts=0;
     const tryInit=()=>{
-      if(typeof MiniSearch!=='undefined'){
+      if(typeof TinySearch!=='undefined'){
         initSearch();
       } else if(attempts++<20){
         setTimeout(tryInit,250);
       } else {
         document.getElementById('indexStatus').innerHTML=
-          '<span class="index-warn">⚠️ MiniSearch library failed to load from CDN. Check your connection and refresh.</span>';
+          '<span class="index-warn">⚠️ TinySearch library failed to load from CDN. Check your connection and refresh.</span>';
       }
     };
     tryInit();
